@@ -1,0 +1,11 @@
+.idea/
+synapp/account/config/database_host_and_credentials.php
+synapp/account/config/facebook_credentials.php
+synapp/account/config/*.php
+synapp/account/config_development/*.php
+synapp/account/config_test/*.php
+synapp/account/config_production/*.php
+synapp/vendor/
+composer.lock
+devtests/
+dependencies/
