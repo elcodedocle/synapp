@@ -1,0 +1,129 @@
+<?php
+// edit and save as path/to/synapp/account/config/deployment_environment.php
+
+define ('SYNAPP_DEPLOYMENT_ENVIRONMENT', "DEVELOPMENT"); // DEVELOPMENT / TEST / PRODUCTION
+
+switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
+    case 'PRODUCTION':
+
+        define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
+
+        define ('SYNAPP_DELETE_DATA_ON_UNREGISTER', false);
+            
+        define ('SYNAPP_CONFIG_DIRNAME', "config_production");
+
+        define ('SYNAPP_USE_MINIFIED_JS', true);
+
+        define ('SYNAPP_USE_MINIFIED_CSS', true);
+
+        define ('SYNAPP_USE_CDN', true);
+
+        // for static resources, like images, stylesheets and client code such as javascript files 
+        // (Not implemented yet)
+        define ('SYNAPP_CDN_ADDRESS', 'https://cdn.synapp.info/synappv1');
+
+        define ('SYNAPP_BOOTSTRAP_PATH', "/vendor/twbs/bootstrap/dist");
+        define ('SYNAPP_BOOTSTRAP_FILEINPUT_PATH', "/vendor/kartik-v/bootstrap-fileinput");
+        define ('SYNAPP_BOOTSTRAP_MULTISELECT_PATH', "/vendor/synappv1/bootstrap-multiselect/dist");
+        define ('SYNAPP_CAPTCHA_PATH', "/vendor/synappv1/captcha");
+        define ('SYNAPP_CKEDITOR_PATH', "/vendor/synappv1/ckeditor/dist");
+        define ('SYNAPP_DATATABLES_PATH', "/vendor/datatables/datatables/media");
+        define ('SYNAPP_DATATABLES_BOOTSTRAP_PATH', "/vendor/synappv1/datatables-bootstrap/dist");
+        define ('SYNAPP_DATATABLES_COLREORDER_PATH', "/vendor/synappv1/datatables-colreorder/dist");
+        define ('SYNAPP_DATATABLES_COLVIS_PATH', "/vendor/synappv1/datatables-colvis/dist");
+        define ('SYNAPP_DATATABLES_TABLETOOLS_PATH', "/vendor/synappv1/datatables-tabletools/dist");
+        define ('SYNAPP_DEFAULT_TASK_RESOURCES_PATH', "/vendor/synappv1/default-task-resources");
+        define ('SYNAPP_FACEBOOK_PHP_SDK_PATH', "/vendor/facebook/php-sdk-v4/src/Facebook");
+        define ('SYNAPP_FLOT_PATH', "/vendor/synappv1/flot/dist");
+        define ('SYNAPP_JQUERY_PATH', "/vendor/synappv1/jquery/dist");
+        define ('SYNAPP_LIGHTBOX2_PATH', "/vendor/synappv1/lightbox2/dist");
+        define ('SYNAPP_OPENPGPJS_PATH', "/vendor/synappv1/openpgpjs/dist");
+        define ('SYNAPP_UI_RESOURCES_PATH', "/vendor/synappv1/ui-resources/default");
+        define ('SYNAPP_UUID_PATH', "/vendor/synappv1/uuid");
+
+        break;
+
+    case 'DEVELOPMENT':
+
+        define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
+
+        define ('SYNAPP_DELETE_DATA_ON_UNREGISTER', true);
+
+        define ('SYNAPP_CONFIG_DIRNAME', "config_development");
+
+        define ('SYNAPP_USE_MINIFIED_JS', false);
+
+        define ('SYNAPP_USE_MINIFIED_CSS', false);
+
+        define ('SYNAPP_USE_CDN', false);
+
+        // for static resources, like images, stylesheets and client code such as javascript files 
+        // (Not implemented yet)
+        define ('SYNAPP_CDN_ADDRESS', '/');
+
+        define ('SYNAPP_BOOTSTRAP_PATH', "/vendor/twbs/bootstrap/dist");
+        define ('SYNAPP_BOOTSTRAP_FILEINPUT_PATH', "/vendor/kartik-v/bootstrap-fileinput");
+        define ('SYNAPP_BOOTSTRAP_MULTISELECT_PATH', "/vendor/synappv1/bootstrap-multiselect/dist");
+        define ('SYNAPP_CAPTCHA_PATH', "/vendor/synappv1/captcha");
+        define ('SYNAPP_CKEDITOR_PATH', "/vendor/synappv1/ckeditor/dist");
+        define ('SYNAPP_DATATABLES_PATH', "/vendor/datatables/datatables/media");
+        define ('SYNAPP_DATATABLES_BOOTSTRAP_PATH', "/vendor/synappv1/datatables-bootstrap/dist");
+        define ('SYNAPP_DATATABLES_COLREORDER_PATH', "/vendor/synappv1/datatables-colreorder/dist");
+        define ('SYNAPP_DATATABLES_COLVIS_PATH', "/vendor/synappv1/datatables-colvis/dist");
+        define ('SYNAPP_DATATABLES_TABLETOOLS_PATH', "/vendor/synappv1/datatables-tabletools/dist");
+        define ('SYNAPP_DEFAULT_TASK_RESOURCES_PATH', "/vendor/synappv1/default-task-resources");
+        define ('SYNAPP_FACEBOOK_PHP_SDK_PATH', "/vendor/facebook/php-sdk-v4/src/Facebook");
+        define ('SYNAPP_FLOT_PATH', "/vendor/synappv1/flot/dist");
+        define ('SYNAPP_JQUERY_PATH', "/vendor/synappv1/jquery/dist");
+        define ('SYNAPP_LIGHTBOX2_PATH', "/vendor/synappv1/lightbox2/dist");
+        define ('SYNAPP_OPENPGPJS_PATH', "/vendor/synappv1/openpgpjs/dist");
+        define ('SYNAPP_UI_RESOURCES_PATH', "/vendor/synappv1/ui-resources/default");
+        define ('SYNAPP_UUID_PATH', "/vendor/synappv1/uuid");
+
+        break;
+
+    case 'TEST':
+
+        define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
+
+        define ('SYNAPP_DELETE_DATA_ON_UNREGISTER', true);
+
+        define ('SYNAPP_CONFIG_DIRNAME', "config_test");
+
+        define ('SYNAPP_USE_MINIFIED_JS', true);
+
+        define ('SYNAPP_USE_MINIFIED_CSS', true);
+
+        define ('SYNAPP_USE_CDN', true);
+
+        // for static resources, like images, stylesheets and client code such as javascript files 
+        // (Not implemented yet)
+        define ('SYNAPP_CDN_ADDRESS', 'https://test.cdn.synapp.info/synappv1');
+
+        define ('SYNAPP_BOOTSTRAP_PATH', "/vendor/twbs/bootstrap/dist");
+        define ('SYNAPP_BOOTSTRAP_FILEINPUT_PATH', "/vendor/kartik-v/bootstrap-fileinput");
+        define ('SYNAPP_BOOTSTRAP_MULTISELECT_PATH', "/vendor/synappv1/bootstrap-multiselect/dist");
+        define ('SYNAPP_CAPTCHA_PATH', "/vendor/synappv1/captcha");
+        define ('SYNAPP_CKEDITOR_PATH', "/vendor/synappv1/ckeditor/dist");
+        define ('SYNAPP_DATATABLES_PATH', "/vendor/datatables/datatables/media");
+        define ('SYNAPP_DATATABLES_BOOTSTRAP_PATH', "/vendor/synappv1/datatables-bootstrap/dist");
+        define ('SYNAPP_DATATABLES_COLREORDER_PATH', "/vendor/synappv1/datatables-colreorder/dist");
+        define ('SYNAPP_DATATABLES_COLVIS_PATH', "/vendor/synappv1/datatables-colvis/dist");
+        define ('SYNAPP_DATATABLES_TABLETOOLS_PATH', "/vendor/synappv1/datatables-tabletools/dist");
+        define ('SYNAPP_DEFAULT_TASK_RESOURCES_PATH', "/vendor/synappv1/default-task-resources");
+        define ('SYNAPP_FACEBOOK_PHP_SDK_PATH', "/vendor/facebook/php-sdk-v4/src/Facebook");
+        define ('SYNAPP_FLOT_PATH', "/vendor/synappv1/flot/dist");
+        define ('SYNAPP_JQUERY_PATH', "/vendor/synappv1/jquery/dist");
+        define ('SYNAPP_LIGHTBOX2_PATH', "/vendor/synappv1/lightbox2/dist");
+        define ('SYNAPP_OPENPGPJS_PATH', "/vendor/synappv1/openpgpjs/dist");
+        define ('SYNAPP_UI_RESOURCES_PATH', "/vendor/synappv1/ui-resources/default");
+        define ('SYNAPP_UUID_PATH', "/vendor/synappv1/uuid");
+
+        break;
+
+    default:
+
+        error_log('error: deployment environment not set or invalid');
+        die('error: deployment environment not set or invalid');
+
+}
