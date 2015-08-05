@@ -1,0 +1,33 @@
+<html>
+<body>
+<script type="text/javascript">
+    var i, j;
+    if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    }
+    else {// code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.open("GET", "books.xml", false);
+    xmlhttp.send();
+    xmlDoc = xmlhttp.responseXML;
+
+    newel = xmlDoc.createElement("edition");
+    newtext = xmlDoc.createTextNode("First");
+    newel.appendChild(newtext);
+    x = xmlDoc.getElementsByTagName("book");
+    x[0].appendChild(newel);
+
+    for (j = 0; j < x.length; j++) {
+        for (i = 0; i < x[j].childNodes.length; i++) {
+            if (x[j].childNodes[i].nodeType == 1) {
+                document.write(x[j].childNodes[i].nodeName);
+                document.write(": ");
+                document.write(x[j].childNodes[i].childNodes[0].nodeValue);
+                document.write("<br />");
+            }
+        }
+    }
+</script>
+</body>
+</html>

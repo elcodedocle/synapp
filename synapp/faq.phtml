@@ -1,0 +1,362 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+
+require_once dirname(__FILE__) . '/languages/get_browser_language.php';
+if (!isset($_SESSION['if_lang'])) {
+    $lang = getDefaultLanguage();
+    if (stripos($lang, "es") === 0) {
+        $_SESSION['if_lang'] = "spa";
+    } elseif (stripos($lang, "pl") === 0) {
+        $_SESSION['if_lang'] = "pol";
+    } else {
+        $_SESSION['if_lang'] = "eng";
+    }
+}
+$langfile = 'faqtxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+require_once dirname(__FILE__) . '/account/notify_no_mail.php';
+
+$bAdm = isset($_SESSION['adm']) && $_SESSION['adm'] === true;
+
+$disabled = "";
+$usubject = "";
+$umessage = FAQ_WRITEHERE;
+$link = connect();
+
+$stmt = $link->query("SELECT * FROM `vdynamic_content` WHERE (categoryname = 'FAQ' OR parentcategoryname = 'FAQ') AND lang = '{$_SESSION['if_lang']}' ORDER BY (weight >= 0) desc, parentcategoryweight, categoryweight, weight");
+
+$category = array();
+$subcategories = array();
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+    if ($row['categoryname']==='FAQ'){
+        $category[]=$row;
+    } else {
+        isset($subcategories['cat_'.$row['categoryid']])?$subcategories['cat_'.$row['categoryid']][]=$row:$subcategories['cat_'.$row['categoryid']]=array('cat_'.$row['categoryid']=>$row);
+    }
+}
+
+if (count($_POST)) {
+    $usubject = $_POST['subject'];
+    $umessage = $_POST['message'];
+    if (captcha_verify_word()) {
+        if (strlen($_POST['subject']) > 78) {
+            $err = true;
+            $errtxt = FAQ_SUBJ_OVS_ERR;
+            $elementid = "subject";
+        } elseif (strlen($_POST['message']) > 15000) {
+            $err = true;
+            $errtxt = FAQ_MSG_OVS_ERR;
+            $elementid = "message";
+        } else {
+            /* Mail the message */
+            $to = "root";
+            $user = isset($_SESSION['user_array']) ? $_SESSION['user_array']['user'] : "anonymous";
+            $subject = "Message from user " . $user;
+            $message = "Subject: " . $_POST['subject'] . PHP_EOL . PHP_EOL . $_POST['message'];
+            notify_no_mail();
+            mail($to, $subject, $message);
+            $disabled = "disabled";
+            $err = false;
+        }
+    } else {
+        $err = true;
+        $errtxt = FAQ_CAPT_ERR;
+        $elementid = "magicword";
+    }
+} else {
+    $err = false;
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>User Guide &amp; Frequently Asked Questions</title>
+
+    <link href="..<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+
+    <script type="text/javascript" src=".<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+
+    <?php if ($bAdm) : ?>
+        <script type="text/javascript" src=".<?php echo SYNAPP_CKEDITOR_PATH; ?>/ckeditor.js"></script>
+    <?php endif; ?>
+
+    <script type="text/javascript" src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+    
+    <script type="text/javascript">
+        if (!String.prototype.startsWith) {
+            String.prototype.startsWith = function(searchString, position) {
+                position = position || 0;
+                return this.indexOf(searchString, position) === position;
+            };
+        }
+        function stopRKey(evt) {
+            var node;
+            evt = (evt) ? evt : ((event) ? event : null);
+            node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+            return !((evt.keyCode == 13) && (node.type == "text"));
+        }
+        document.onkeypress = stopRKey;
+        <?php if ($bAdm) : ?>
+
+            function deleteDynamicData(params){
+                var adata = {}, confirmMessage, containerId;
+                if (params.hasOwnProperty('categoryid')){
+                    adata.categoryid = params.categoryid;
+                    confirmMessage = '<?php echo FAQ_CONFIRM_CATEGORY_DELETION; ?>';
+                    containerId = 'cat_' + params.categoryid;
+
+                } else if (params.hasOwnProperty('contentid')){
+                    adata.contentid = params.contentid;
+                    confirmMessage = '<?php echo FAQ_CONFIRM_DELETION; ?>';
+                    containerId = 'con_' + params.contentid;
+                } else {
+                    return;
+                }
+                if (!confirm(confirmMessage)){
+                    return;
+                }
+                adata.delete = 'true';
+                $.ajax({
+                    method: 'POST',
+                    url: 'admin/faq/save_dynamic_content_data.php',
+                    data: adata
+                }).done(function() {
+                    $('#'+containerId).hide();
+                });
+            }
+            function getDynamicContentId($element){
+                return $element.attr('id').substr(5);
+            }
+            function addDynamicData(params){
+                var adata = {};
+                if (params.hasOwnProperty('categoryid') && !params.hasOwnProperty('contentid')){
+                    adata.categoryid = -1;
+                } else if (params.hasOwnProperty('contentid')){
+                    adata.categoryid = params.categoryid;
+                    adata.contentid = -1;
+                } else {
+                    return;
+                }
+                adata.add = 'true';
+                adata.lang = '<?php echo $_SESSION['if_lang']; ?>';
+                $.ajax({
+                    method: 'POST',
+                    url: 'admin/faq/save_dynamic_content_data.php',
+                    data: adata
+                }).done(function(data){
+                    var $node, $nodeCopy, nodeId, newClassSelector, containerId;
+                    if (params.hasOwnProperty('categoryid') && !params.hasOwnProperty('contentid')){
+                        //nodeId = 'newCategoryContainer';
+                        //newClassSelector = '.new_category';
+                        //containerId = 'cat_'+params.categoryid;
+                        document.location.reload(true);
+                        return;
+                    } else if (params.hasOwnProperty('contentid')) {
+                        nodeId = 'newItemContainer'+params.categoryid;
+                        newClassSelector = '.new_item'+params.categoryid;
+                        containerId = 'con_'+data.id;
+                    } else {
+                        return;
+                    }
+                    $node = $('#'+nodeId);
+                    $nodeCopy = $node.clone();
+                    $nodeCopy.find('.ecweight').on('blur',function(){saveWeight($(this))});
+                    $node.attr('id', containerId);
+                    $node.css('display','block');
+                    $(newClassSelector).each(function(){
+                        var id = $(this).attr('id');
+                        $(this).attr('id',id.substring(0,5)+data.id);
+                        if (id.startsWith('conn')||id.startsWith('conv')){
+                            $(this).attr('contenteditable','true');
+                            loadEditor(this);
+                        }
+                        $(this).removeClass('new_item'+params.categoryid);
+                    });
+                    $nodeCopy.insertAfter($node);
+                });
+            }
+            function saveWeight($element){
+
+                var data = $element.val(), adata = {}, edCid = $element.attr('id');
+                if (edCid.startsWith('catw_')){
+                    adata.categoryid = edCid.substr(5);
+                    adata.weight = data;
+                } else if (edCid.startsWith('conw_')){
+                    adata.contentid = edCid.substr(5);
+                    adata.weight = data;
+                } else {
+                    return;
+                }
+                $.ajax({
+                    method: 'POST',
+                    url: 'admin/faq/save_dynamic_content_data.php',
+                    data: adata
+                });
+
+            }
+            CKEDITOR.disableAutoInline = true;
+            $(document).ready(function(){
+                $('.ecweight').on('blur', function(){saveWeight($(this));});
+
+                $('*[contenteditable="true"]').each(function(){loadEditor(this);});
+
+            });
+            function loadEditor(element){
+
+
+                CKEDITOR.inline( element, {
+                    extraPlugins: 'confighelper',
+                    placeholder: '<?php echo FAQ_TYPEHERE; ?>',
+                    on: {
+                        blur: function( event ) {
+                            var data = event.editor.getData(), adata = {}, edCid = event.editor.container.getId();
+                            if (!event.editor.checkDirty()){
+                                return;
+                            }
+                            adata.lang = '<?php echo $_SESSION['if_lang'];?>';
+                            if (edCid.startsWith('catn_')){
+                                adata.categoryid = edCid.substr(5);
+                                adata.categoryname = data;
+                            } else if (edCid.startsWith('conn_')){
+                                adata.contentid = edCid.substr(5);
+                                adata.contentname = data;
+                            } else if (edCid.startsWith('conv_')){
+                                adata.contentid = edCid.substr(5);
+                                adata.contentvalue = data;
+                            } else {
+                                return;
+                            }
+                            $.ajax({
+                                method: 'POST',
+                                url: 'admin/faq/save_dynamic_content_data.php',
+                                data: adata
+                            });
+                        }
+                    }
+                } );
+
+
+            }
+        <?php endif; ?>
+    </script>
+</head>
+<body<?php if ($err) {
+    echo " onload=\"javascript:window.location='faq.phtml#err';document.getElementById('$elementid').focus();\"";
+} ?>>
+<div id="wrap">
+    <div id="content">
+        <?php
+        if (isset($_SESSION['auth'])&&$_SESSION['auth'] === true || isset($_SESSION['adm']) && $_SESSION['adm'] === true) {
+            $page = "faq";
+            require_once dirname(__FILE__) . '/watrixbar.phtml';
+        }
+        ?>
+        <div style="max-width:1024px;margin:auto;text-align:left;">
+            <h1 style="text-align:center;"><?php echo FAQ_HEADER; ?></h1>
+
+            <h2 style="text-align:center;"><?php echo FAQ_HEADER_2; ?></h2>
+
+            <div style="max-width:900px;margin:auto;">
+                <?php
+                    foreach ($subcategories as $subcategory){
+                        $firstRow = reset($subcategory);
+                        if ($bAdm || $firstRow['categoryweight'] > 0){
+                            echo "<div id=\"cat_{$firstRow['categoryid']}\" class=\"section\">";
+                            if (is_array($firstRow) && (strlen($firstRow['categoryname'])>0 || $bAdm)) {  
+                                if ($bAdm){
+                                    echo "<input class=\"ecweight\" id=\"catw_".$firstRow['categoryid']."\" type=\"text\" value=\"{$firstRow['categoryweight']}\" />";
+                                    echo "[<a id=\"catd_".$firstRow['categoryid']."\" href=\"#\" onclick=\"deleteDynamicData({categoryid:{$firstRow['categoryid']}});return false;\">-</a>]";
+                                }
+                                echo "<p id=\"catn_".$firstRow['categoryid']."\" class=\"title\" ".($bAdm?"contenteditable=\"true\"":"").">{$firstRow['categoryname']}</p>"; 
+                            }
+                            foreach ($subcategory as $row){
+                                if ($bAdm || $row['weight'] > 0){
+                                    echo "<div id=\"con_{$row['contentid']}\">";
+                                    if ($bAdm){
+                                        echo "&nbsp;&nbsp;&nbsp;&nbsp;<input class=\"ecweight\" id=\"conw_".$row['contentid']."\" type=\"text\" value=\"{$row['weight']}\" />";
+                                        echo "[<a id=\"cond_".$row['contentid']."\" href=\"#\" onclick=\"deleteDynamicData({contentid:{$row['contentid']}});return false;\">-</a>]";
+                                    }
+                                    if (strlen($row['contentname'])>0 || $bAdm) { echo "<p id=\"conn_".$row['contentid']."\" class=\"subtitle\" ".($bAdm?"contenteditable=\"true\"":"").">{$row['contentname']}</p>"; }
+                                    if ($bAdm){
+                                        echo "<div id=\"conv_".$row['contentid']."\" contenteditable=\"true\">";
+                                    }
+                                        if (strlen($row['contentvalue'])>0 || $bAdm) { echo $row['contentvalue']; }
+                                    if ($bAdm){echo "</div>";}
+                                    echo "</div>";
+                                }
+                            }
+
+                            if ($bAdm){
+                                echo "<div id=\"newItemContainer{$firstRow['categoryid']}\" style=\"display:none\">";
+                                echo "&nbsp;&nbsp;&nbsp;&nbsp;<input class=\"ecweight new_item{$firstRow['categoryid']}\" id=\"conw_new{$firstRow['categoryid']}\" type='text' value=\"-1\" />";
+                                echo "[<a id=\"cond_new{$firstRow['categoryid']}\" class=\"new_item{$firstRow['categoryid']}\" href='#' onclick=\"deleteDynamicData({contentid:($(this).attr('id').substr(5))});return false;\">-</a>]";
+                                echo "<p id=\"conn_new{$firstRow['categoryid']}\" class=\"subtitle new_item{$firstRow['categoryid']}\"></p>";
+                                echo "<div id=\"conv_new{$firstRow['categoryid']}\" class=\"new_item{$firstRow['categoryid']}\"></div>";
+                                echo "</div>";
+                                echo "<div>&nbsp;&nbsp;&nbsp;&nbsp;[<a href='#' onclick=\"addDynamicData({contentid:'',categoryid:".$firstRow['categoryid']."});return false;\">+</a>]</div>";
+                            }
+
+                            echo "</div>";
+
+                        }
+                    }
+                    if ($bAdm){
+                        echo "<div id=\"newCategoryContainer\" style=\"display:none\">";
+                        echo "<input class=\"ecweight new_category\" id=\"catw_new\" type='text' value=\"-1\" />";
+                        echo "[<a id=\"catd_new\" class=\"new_category\" href='#' onclick=\"deleteDynamicData(getDynamicContentId($(this)));return false;\">-</a>]";
+                        echo "<p id=\"catn_new\" class=\"title new_category\"></p>";
+                        echo "</div>";
+                        echo "<div>&nbsp;&nbsp;[<a href='#' onclick=\"addDynamicData({categoryid:''});return false;\">+</a>]</div>";
+                    }
+
+                ?>
+            </div>
+            <div style="margin:auto; width:425px;">
+                <form method="post">
+                    <div style="padding:5px 0;"><?php echo FAQ_SUBJECT; ?><label for="subject"></label><input type="text" size="50" name="subject"
+                                                                                 id="subject"
+                                                                                 value="<?php echo $usubject; ?>" <?php
+                        echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>/></div>
+                    <div style="padding:5px 0;"><label for="message"></label><textarea
+                            onfocus="if (this.value==='<?php echo FAQ_WRITEHERE; ?>') { this.value=''; }"
+                            onblur="if (this.value==='') { this.value='<?php echo FAQ_WRITEHERE; ?>'; }"
+                            name="message" id="message" cols="50" rows="25" <?php
+                        echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>><?php echo $umessage; ?></textarea>
+                    </div>
+                    <?php if ($disabled !== "disabled") {
+                        echo "<div style=\"margin:0;padding:0;text-align:center;\"><span id=\"captchaImage\"><img style=\"border:0;width:40%;\"
+    src='." . SYNAPP_CAPTCHA_PATH . "/captcha.image.php?nocache=" . hash("sha256", time() . mt_rand()) . "' alt=\"captcha\"/></span><a
+href='#' onclick=\"updateCaptcha(null, '." . SYNAPP_CAPTCHA_PATH ."' );return false;\"><img src='.". SYNAPP_UI_RESOURCES_PATH ."/images/refresh.png' style=\"border:0\" alt=\""
+                            . FAQ_REFRESH . "\" title=\"" . FAQ_REFRESH . "\"/></a></div>";
+                        echo "<div style=\"margin:0;padding:0;text-align:center;\">" . FAQ_CAPT . "<input type='text'
+    id=\"magicword\" name=\"magicword\" autocomplete=\"off\"/></div>";
+                        if ($err) {
+                            echo "<div id='err' style=\"padding:5px 0;text-align:center;\"><span style=\"color:red\">"
+                                . (isset($errtxt) ? $errtxt : '') . "</span></div>";
+                        }
+                    }?>
+                    <div style="padding:5px 0;text-align:right;"><input type="submit" id="dabutton"
+                                                                        value="<?php echo $disabled === "disabled" ?
+                                                                            FAQ_BUTTON_SENT : FAQ_BUTTON_SEND; ?>" <?php echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>/>
+                    </div>
+                </form>
+            </div>
+            <?php if ($disabled === "disabled") {
+                echo "<div><p>" . FAQ_MSG_SENT . "</p><p>" . FAQ_SENDAGAIN_1 . " <a href='contact.phtml'>"
+                    . FAQ_SENDAGAIN_2 . "</a> " . FAQ_SENDAGAIN_3 . "</p></div>";
+            } ?>
+        </div>
+    </div>
+</div>
+</body>
+</html>

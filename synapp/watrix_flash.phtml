@@ -1,0 +1,102 @@
+<?php
+session_start();
+if (!isset($_SESSION['auth'])) {
+    header("Location: login.phtml?location=watrix_flash.phtml");
+    die();
+}
+if ($_SESSION['auth'] !== true) {
+    header("Location: login.phtml?location=watrix_flash.phtml");
+    die();
+}
+if (($_SESSION['user_array']['gotestbefore'] == "1") && ((($_SESSION['user_array']['ditloid_lock_timestamp'] > time())
+            && ($_SESSION['user_array']['ditloid_time_left_when_locked'] == 0)) || ($_SESSION['user_array']['ditloid_lock_timestamp'] == 0))
+) {
+    header("Location: test_will_shortz_morgan_worthy_ditloid.phtml");
+    die();
+}
+if (($_SESSION['user_array']['timer_utestb_end'] == "0")) {
+    header("Location: uctest.phtml?ttype=utest");
+    die();
+}
+if (($_SESSION['user_array']['timer_ctestb_end'] == "0")) {
+    header("Location: uctest.phtml?ttype=ctest");
+    die();
+}
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'watrixflashtxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+require_once dirname(__FILE__) . '/watrix/get_pair.php';
+
+$ticket = mt_rand();
+$link = connect();
+if (($pair = get_pair($link, 2)) === false) {
+    header("Location: watrix/finish.php?type=2");
+    die();
+}
+$_SESSION['justlogged'] = false;
+$link = null;
+/* $display_order=($ticket%2)?array("id1","id2"):array("id2","id1"); */
+$display_order = array("id1", "id2");
+$_SESSION['hashed_ticket'] = hash("sha256", $ticket . $pair['id1'] . $pair['id2']);
+?><!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title><?php echo WXF_TITLE; ?></title>
+    <script type="text/javascript">errAnswerTooLong = "<?php echo WX_ERRANSWERTOOLONG; ?>";</script>
+    <script type="text/javascript" src="watrix/js/putAssociationAndPullStats.js"></script>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+</head>
+<body onload="setTimeout('switchPair()',5000);">
+<div id="wrap">
+    <div id="content">
+        <?php $page = "watrix_flash";
+        require_once dirname(__FILE__) . '/watrixbar.phtml'; ?>
+        <div id="hr1" style="display:inline;"><h1><?php echo WXF_HEADER; ?></h1></div>
+        <div id="hr2" style="display:none;"><h1><?php echo WXF_HEADER_2; ?></h1></div>
+        <div id="img1" style="display:inline;"><img src="uploads/images/<?php echo $pair[$display_order[0]]; ?>"
+                                                    alt="img1" title="img1"/></div>
+        <div id="img2" style="display:none;"><img src="uploads/images/<?php echo $pair[$display_order[1]]; ?>"
+                                                  alt="img2" title="img2"/></div>
+        <div id="formdiv" style="display:none;"><br/>
+
+            <form onSubmit="return false;">
+                <input type="hidden" name="ticket" id="ticket" value="<?php echo $ticket; ?>"/>
+                <input type="hidden" name="id1" id="id1" value="<?php echo $pair['id1']; ?>"/>
+                <input type="hidden" name="id2" id="id2" value="<?php echo $pair['id2']; ?>"/>
+                <input type="hidden" name="type" id="type" value="2"/>
+                <span style="font-size:xx-large;font-weight:bold;"><?php echo WXF_INPUT; ?></span><br/><input
+                    type="text" name="answer" id="answer" size="64"/>
+                <br/><br/><input type="button" id="dabutton" value="<?php echo WXF_BUTTON; ?>"
+                                 onclick="putAssociationAndPullStats('<?php echo WXF_BUTTON_NEXT; ?>');"/>
+            </form>
+        </div>
+        <div id="results"></div>
+    </div>
+</div>
+</body>
+</html>

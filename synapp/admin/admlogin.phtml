@@ -1,0 +1,124 @@
+<?php
+session_start();
+
+if (isset($_SESSION['auth'])) {
+    header('Location: ../account/logout.php?location=../admin/admlogin.phtml');
+    exit;
+}
+
+if (isset($_SESSION['adm']) && $_SESSION['adm'] === true) {
+    header('Location: admsettings.phtml');
+    exit;
+}
+
+
+require_once dirname(__FILE__) . '/../account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/../account/'.SYNAPP_CONFIG_DIRNAME.'/profile_constants_constraints_defaults_and_selector_values.php';
+require_once dirname(__FILE__) . '/../connect.php';
+require_once dirname(__FILE__) . '/../languages/get_interface_languages_list.php';
+
+$lang = $_SESSION['if_lang'];
+
+/** @noinspection PhpIncludeInspection */
+require_once dirname(__FILE__) . "/../languages/{$lang}/admin/admlogintxt.php";
+
+require_once dirname(__FILE__) . '/account/login_admin_user.php';
+require_once dirname(__FILE__) . '/../selectors/option_list.php';
+
+if (isset($_POST['whoami']) && $_POST['whoami'] === 'adminloginform') {
+    $link = connect();
+    if (($result = process_adm_login($_POST['user'], $_POST['pass'], $link)) !== false && !isset($result['errCod'])) {
+        $_SESSION['adm'] = true;
+        $_SESSION['adm_array'] = $result;
+        $_SESSION['if_lang'] = $_SESSION['adm_array']['lang'];
+        header('Location: ' . (isset($_GET['location']) ? $_GET['location'] : (isset($_POST['location']) ? $_POST['location']:'admsettings.phtml')));
+        exit;
+    }
+}
+
+if (!isset($_SESSION['interface_languages'])) {
+    if (!isset($link)) {
+        $link = connect();
+    }
+    $_SESSION['interface_languages'] = get_interface_languages_list($link);
+}
+$ill = option_list($_SESSION['interface_languages'], $_SESSION['if_lang']);
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo ADMLOGIN_TITLE; ?></title>
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <style>
+        /* CSS used here will be applied after bootstrap.css */
+        .login-screen {
+            background-color: #D3D3D3;
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+            margin: 50px auto 0;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .pass {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="wrapper">
+    <div id="container">
+        <div id="content">
+            <div class="borderbox">
+                <div class="login-screen">
+                    <div style="float:right" class="topleftcornerbox">
+                        <form name="if_lang_form" enctype="multipart/form-data" method="post">
+                            <input type="hidden" name="whoami" value="if_lang_form"/>
+                            <label>
+                                <select name="if_lang" onchange="this.form.submit()">
+                                    <?php for ($i = 0; $i < count($ill); $i++) {
+                                    echo $ill[$i];
+                                } ?>
+                                </select>
+                            </label>
+                        </form>
+                    </div>
+                    <h3 style="text-align: center;padding-top: 10px;">Synapp Admin Login</h3>
+                    <hr style="margin-top: 10px;">
+                    <form name="admloginform" enctype="multipart/form-data" method="post">
+                        <input type="hidden" name="whoami" value="adminloginform"/>
+                        <div class="input-group name <?php echo isset($result['errCod'])&&$result['errCod']==='USER_ERR'?'has-error':''; ?>">
+                            <span class="input-group-addon" id="basic-addon1">@</span>
+                            <input name="user" type="text" class="form-control" placeholder="<?php echo ADMLOGIN_USERNAME; ?>" <?php echo isset($_POST['user'])?"value='{$_POST['user']}'":'' ?>
+                                   aria-describedby="basic-addon1">
+                        </div>
+                        <div class="input-group <?php echo isset($result['errCod'])&&$result['errCod']==='USER_ERR'?'has-error':'" style="display:none;'; ?>">
+                            <?php if (isset($result['errCod'])&&$result['errCod']==='USER_ERR'):?><span class="help-block" style="margin-bottom:0;"><?php echo ADMLOGIN_USERNAME_ERR; ?></span><?php endif; ?>
+                        </div>
+                        <div class="input-group pass <?php echo isset($result['errCod'])&&$result['errCod']==='PASS_ERR'?'has-error':''; ?>">
+                            <span class="input-group-addon" id="basic-addon2"><i
+                                    class="glyphicon glyphicon-link"></i></span>
+                            <input name="pass" type="password" class="form-control" placeholder="<?php echo ADMLOGIN_PASSWORD; ?>"
+                                   aria-describedby="basic-addon2">
+                        </div>
+                        <div class="input-group <?php echo isset($result['errCod'])&&($result['errCod']==='OP_ERR'||$result['errCod']==='PASS_ERR')?'has-error':'" style="display:none;'; ?>">
+                            <?php if (isset($result['errCod'])&&$result['errCod']==='PASS_ERR'):?><span class="help-block" style="margin-bottom:0;"><?php echo ADMLOGIN_PASSWORD_ERR; ?></span><?php endif; ?>
+                            <?php if (isset($result['errCod'])&&$result['errCod']==='OP_ERR'):?><span class="help-block" style="margin-bottom:0;"><?php echo ADMLOGIN_ABUSE_ERR; ?></span><?php endif; ?>
+                        </div>
+                        <div class="input-group send" style="margin-top: 10px">
+                           <button class="btn btn-primary" type="submit" name="send"><?php echo ADMLOGIN_SEND; ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

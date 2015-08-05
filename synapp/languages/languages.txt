@@ -1,0 +1,485 @@
+aar 	aa 	Afar 	Qafara
+abk 	ab 	Abkhazian 	Аҧсуа
+ace 	  	Acehnese, Achinese 	Bahsa Acèh
+ach 	  	Acoli 	
+ada 	  	Adangme 	adangbɛ
+ady 	  	Adyghe, Adygei 	адыгэбзэ, адыгабзэ
+afa 	  	Afroasiatic languages 	 	collection
+afh 	  	Afrihili 	 	constructed
+afr 	af 	Afrikaans 	Afrikaans
+ain 	  	Ainu (Japan) 	アイヌ イタㇰ(イタッㇰ) or ainu itak
+aka 	ak 	Akan 	 	macrolanguage
+akk 	  	Akkadian 	akkadû, lišānum akkadītum 	ancient
+alb/sqi 	sq 	Albanian 	Shqip 	macrolanguage
+ale 	  	Aleut 	
+alg 	  	Algonquian languages 	 	collection
+alt 	  	Southern Altai 	алтай тили
+amh 	am 	Amharic 	አማርኛ
+ang 	  	Old English (ca. 450–1100) 	Englisc 	historic
+anp 	  	Angika 	
+apa 	  	Apache languages 	 	collection
+ara 	ar 	Arabic 	العربية 	macrolanguage
+arc 	  	Official Aramaic, Imperial Aramaic (700–300 BC) 	ܐܪܡܝܐ 	ancient
+arg 	an 	Aragonese 	Aragonés
+arm/hye 	hy 	Armenian 	Հայերեն լեզու
+arn 	  	Mapudungun, Mapuche 	mapudungun, mapuchedungun
+arp 	  	Arapaho 	Hinóno'eitíít
+art 	  	Artificial languages 	 	collection
+arw 	  	Arawak 	
+asm 	as 	Assamese 	অসমীয়া
+ast 	  	Asturian, Bable, Leonese, Asturleonese 	asturianu, Bable, Llionés, Asturllionés
+ath 	  	Athabaskan languages 	 	collection
+aus 	  	Australian languages 	 	collection
+ava 	av 	Avaric 	авар мацӀ, магӀарул мацӀ
+ave 	ae 	Avestan 	avesta 	ancient
+awa 	  	Awadhi 	अवधी
+aym 	ay 	Aymara 	aymar aru 	macrolanguage
+aze 	az 	Azerbaijani 	Azərbaycanca 	macrolanguage
+bad 	  	Banda languages 	 	collection
+bai 	  	Bamileke languages 	 	collection
+bak 	ba 	Bashkir 	башҡорт теле
+bal 	  	Baluchi 	بلوچی 	macrolanguage
+bam 	bm 	Bambara 	bamanankan
+ban 	  	Balinese 	Basa Bali
+baq/eus 	eu 	Basque 	euskara
+bas 	  	Basa 	ɓasaá
+bat 	  	Baltic languages 	 	collection
+bej 	  	Beja, Bedawiyet 	بداوية
+bel 	be 	Belarusian 	Беларуская мова
+bem 	  	Bemba 	ichiBemba
+ben 	bn 	Bengali 	বাংলা
+ber 	  	Berber languages 	 	collection
+bho 	  	Bhojpuri 	भोजपुरी
+bih 	bh 	Bihari languages 	 	collection
+bik 	  	Bikol 	 	macrolanguage
+bin 	  	Bini, Edo 	Edo
+bis 	bi 	Bislama 	Bislama
+bla 	  	Siksika 	siksiká,  ᓱᖽᐧᖿ
+bnt 	  	Bantu languages 	 	collection
+bos 	bs 	Bosnian 	bosanski jezik
+bra 	  	Braj 	ब्रज भाषा
+bre 	br 	Breton 	brezhoneg
+btk 	  	Batak languages 	Hata Batak 	collection
+bua 	  	Buriat 	буряад хэлэн 	macrolanguage
+bug 	  	Buginese 	ᨅᨔ ᨕᨘᨁᨗ
+bul 	bg 	Bulgarian 	български език
+bur/mya 	my 	Burmese 	မြန်မာစာ
+byn 	  	Blin, Bilin 	ብሊና
+cad 	  	Caddo 	Hasí:nay
+cai 	  	Central American Indian languages 	 	collection
+car 	  	Galibi Carib 	
+cat 	ca 	Catalan, Valencian 	català
+cau 	  	Caucasian languages 	 	collection
+ceb 	  	Cebuano 	Sinugboanon
+cel 	  	Celtic languages 	 	collection
+cha 	ch 	Chamorro 	Chamoru
+chb 	  	Chibcha 	 	extinct
+che 	ce 	Chechen 	нохчийн мотт
+chg 	  	Chagatai 	جغتای 	extinct
+chi/zho 	zh 	Chinese 	中文 	macrolanguage
+chk 	  	Chuukese 	
+chm 	  	Mari (Russia) 	марий йылме 	macrolanguage
+chn 	  	Chinook Jargon 	
+cho 	  	Choctaw 	Chahta Anumpa
+chp 	  	Chipewyan, Dene Suline 	Dëne Sųłiné, ᑌᓀᓲᒢᕄᓀ
+chr 	  	Cherokee 	ᏣᎳᎩ
+chu 	cu 	Church Slavonic, Church Slavic, Old Church Slavonic, Old Slavonic, Old Bulgarian 	ѩзыкъ словѣньскъ 	ancient
+chv 	cv 	Chuvash 	чӑваш чӗлхи
+chy 	  	Cheyenne 	Tsêhést
+cmc 	  	Chamic languages 	 	collection
+cop 	  	Coptic 	ⲙⲉⲧⲛ̀ⲣⲉⲙⲛ̀ⲭⲏⲙⲓ 	extinct
+cor 	kw 	Cornish 	Kernewek
+cos 	co 	Corsican 	corsu, lingua corsa
+cpe 	  	creoles and pidgins, English-based 	 	collection
+cpf 	  	creoles and pidgins, French-based 	 	collection
+cpp 	  	creoles and pidgins, Portuguese-based 	 	collection
+cre 	cr 	Cree 	ᓀᐦᐃᔭᐍᐏᐣ 	macrolanguage
+crh 	  	Crimean Tatar, Crimean Turkish 	qırımtatar tili, къырымтатар тили
+crp 	  	creoles and pidgins 	 	collection
+csb 	  	Kashubian 	kaszëbsczi jãzëk
+cus 	  	Cushitic languages 	 	collection
+cze/ces 	cs 	Czech 	čeština (substantive), česky (adverb)
+dak 	  	Dakota 	Lakhota
+dan 	da 	Danish 	dansk
+dar 	  	Dargwa 	дарган мез
+day 	  	Land Dayak languages 	 	collection
+del 	  	Delaware 	Lënape 	macrolanguage
+den 	  	Slave (Athapascan) 	 	macrolanguage
+dgr 	  	Dogrib 	Tłįchǫ
+din 	  	Dinka 	Thuɔŋjäŋ 	macrolanguage
+div 	dv 	Divehi, Dhivehi, Maldivian 	ދިވެހިބަސ
+doi 	  	Dogri 	डोगरी 	macrolanguage
+dra 	  	Dravidian languages 	 	collection
+dsb 	  	Lower Sorbian 	dolnoserbski
+dua 	  	Duala 	
+dum 	  	Dutch, Middle (ca. 1050–1350) 	 	historic
+dut/nld 	nl 	Dutch, Flemish 	Nederlands
+dyu 	  	Dyula 	Julakan
+dzo 	dz 	Dzongkha 	རྫོང་ཁ
+efi 	  	Efik 	
+egy 	  	Egyptian (Ancient) 	 	ancient
+eka 	  	Ekajuk 	
+elx 	  	Elamite 	 	ancient
+eng 	en 	English 	English
+enm 	  	Middle English (1100–1500) 	Middle English (1100–1500) 	historic
+epo 	eo 	Esperanto 	Esperanto 	constructed
+est 	et 	Estonian 	eesti keel 	macrolanguage
+ewe 	ee 	Ewe 	Ɛʋɛgbɛ
+ewo 	  	Ewondo 	
+fan 	  	Fang 	
+fao 	fo 	Faroese 	føroyskt
+fat 	  	Fanti 	
+fij 	fj 	Fijian 	vosa Vakaviti
+fil 	  	Filipino, Pilipino 	Wikang Filipino
+fin 	fi 	Finnish 	suomi, suomen kieli
+fiu 	  	Finno-Ugric languages 	 	collection
+fon 	  	Fon 	Fɔngbe
+fre/fra 	fr 	French 	français, langue française
+frm 	  	Middle French (ca. 1400—1600) 	 	historic
+fro 	  	Old French (842—ca. 1400) 	 	historic
+frr 	  	Northern Frisian 	
+frs 	  	Eastern Frisian 	Seeltersk Fräisk, Seeltersk, Fräisk
+fry 	fy 	Western Frisian 	frysk
+ful 	ff 	Fulah 	Fulfulde, Pulaar, Pular 	macrolanguage
+fur 	  	Friulian 	furlan
+gaa 	  	Ga 	Gã
+gay 	  	Gayo 	
+gba 	  	Gbaya 	 	macrolanguage
+gem 	  	Germanic languages 	 	collection
+geo/kat 	ka 	Georgian 	ქართული ენა (kartuli ena)
+ger/deu 	de 	German 	Deutsch
+gez 	  	Ge'ez 	ግዕዝ 	ancient
+gil 	  	Gilbertese, Kiribati 	taetae ni Kiribati
+gla 	gd 	Scottish Gaelic, Gaelic 	Gàidhlig
+gle 	ga 	Irish 	Gaeilge
+glg 	gl 	Galician 	Galego
+glv 	gv 	Manx 	Gaelg, Manninagh
+gmh 	  	Middle High German (ca. 1050–1500) 	diutisk 	historic
+goh 	  	Old High German (ca. 750–1050) 	diutisc 	historic
+gon 	  	Gondi 	Gōndi 	macrolanguage
+gor 	  	Gorontalo 	
+got 	  	Gothic 	𐌲𐌿𐍄𐌹𐍃𐌺 	ancient
+grb 	  	Grebo 	 	macrolanguage
+grc 	  	Ancient Greek (–1453) 	Ἑλληνικά 	historic
+gre/ell 	el 	Modern Greek (1453–) 	Ελληνικά
+grn 	gn 	Guarani 	Avañe'ẽ 	macrolanguage
+gsw 	  	Swiss German, Alemannic 	Schwyzerdütsch, Alemannisch
+guj 	gu 	Gujarati 	ગુજરાતી
+gwi 	  	Gwichʼin 	
+hai 	  	Haida 	X̲aat Kíl 	macrolanguage
+hat 	ht 	Haitian Creole, Haitian 	Kreyòl ayisyen
+hau 	ha 	Hausa 	Hausancī, هَوُسَ
+haw 	  	Hawaiian 	‘Ōlelo Hawai‘i
+heb 	he 	Hebrew 	עִבְרִית, עברית
+her 	hz 	Herero 	Otjiherero
+hil 	  	Hiligaynon 	Ilonggo
+him 	  	Himachali languages 	 	collection
+hin 	hi 	Hindi 	हिन्दी
+hit 	  	Hittite 	 	ancient
+hmn 	  	Hmong 	Hmoob 	macrolanguage
+hmo 	ho 	Hiri Motu 	Hiri Motu
+hrv 	hr 	Croatian 	hrvatski jezik
+hsb 	  	Upper Sorbian 	hornjoserbsce
+hun 	hu 	Hungarian 	magyar
+hup 	  	Hupa 	Na:tinixwe Mixine:whe
+iba 	  	Iban 	
+ibo 	ig 	Igbo 	Igbo
+ice/isl 	is 	Icelandic 	íslenska
+ido 	io 	Ido 	Ido 	constructed
+iii 	ii 	Sichuan Yi, Nuosu 	ꆇꉙ
+ijo 	  	Ijo languages 	 	collection
+iku 	iu 	Inuktitut 	ᐃᓄᒃᑎᑐᑦ 	macrolanguage
+ile 	ie 	Interlingue, Occidental 	Interlingue 	constructed
+ilo 	  	Iloko 	
+ina 	ia 	Interlingua (International Auxiliary Language Association) 	interlingua 	constructed
+inc 	  	Indic languages 	 	collection
+ind 	id 	Indonesian 	Bahasa Indonesia
+ine 	  	Indo-European languages 	 	collection
+inh 	  	Ingush 	гӀалгӀай мотт
+ipk 	ik 	Inupiaq 	Iñupiaq, Iñupiatun 	macrolanguage
+ira 	  	Iranian languages 	 	collection
+iro 	  	Iroquoian languages 	 	collection
+ita 	it 	Italian 	italiano
+jav 	jv 	Javanese 	basa Jawa (ꦧꦱꦗꦮ)
+jbo 	  	Lojban 	lojban 	constructed
+jpn 	ja 	Japanese 	日本語 (にほんご)
+jpr 	  	Judæo-Persian 	
+jrb 	  	Judeo-Arabic 	 	macrolanguage
+kaa 	  	Kara-Kalpak 	қарақалпақ тили
+kab 	  	Kabyle 	Taqbaylit
+kac 	  	Kachin, Jingpho 	Jingpho, Marip
+kal 	kl 	Greenlandic, Kalaallisut 	kalaallisut, kalaallit oqaasii
+kam 	  	Kamba 	
+kan 	kn 	Kannada 	ಕನ್ನಡ
+kar 	  	Karen languages 	 	collection
+kas 	ks 	Kashmiri 	कॉशुर, کٲشُر
+kau 	kr 	Kanuri 	 	macrolanguage
+kaw 	  	Kawi 	Bhāṣa Kawi 	ancient
+kaz 	kk 	Kazakh 	Қазақ тілі
+kbd 	  	Circassian 	Адыгэбзэ
+kha 	  	Khasi 	Khasi
+khi 	  	Khoisan languages 	 	collection
+khm 	km 	Central Khmer 	ភាសាខ្មែរ
+kho 	  	Khotanese, Sakan 	Khotanese, Sakan
+kik 	ki 	Kikuyu, Gikuyu 	Gĩkũyũ
+kin 	rw 	Kinyarwanda 	Ikinyarwanda
+kir 	ky 	Kirghiz, Kyrgyz 	кыргыз тили
+kmb 	  	Kimbundu 	
+kok 	  	Konkani 	कॊंकणि 	macrolanguage
+kom 	kv 	Komi 	коми кыв 	macrolanguage
+kon 	kg 	Kongo 	Kikongo 	macrolanguage
+kor 	ko 	Korean 	한국어 (韓國語), 조선말 (朝鮮語)
+kos 	  	Kosraean 	Kosrae
+kpe 	  	Kpelle 	kpele 	macrolanguage
+krc 	  	Karachay-Balkar 	къарачай-малкъар тил
+krl 	  	Karelian 	karjalan kieli
+kro 	  	Kru languages 	 	collection
+kru 	  	Kurukh 	
+kua 	kj 	Kuanyama, Kwanyama 	
+kum 	  	Kumyk 	Кумык
+kur 	ku 	Kurdish 	Kurdî 	macrolanguage
+kut 	  	Kutenai 	Ktunaxa
+lad 	  	Ladino 	ג'ודיאו-איספאנייול
+lah 	  	Lahnda 	ਲਹਿੰਦੀ 	macrolanguage (does not include Punjabi (pa/pan))
+lam 	  	Lamba 	
+lao 	lo 	Lao 	ພາສາລາວ
+lat 	la 	Latin 	latine, lingua Latina 	ancient
+lav 	lv 	Latvian 	latviešu valoda
+lez 	  	Lezghian 	лезги чӀал
+lim 	li 	Limburgish, Limburger, Limburgan 	Limburgs
+lin 	ln 	Lingala 	lingala
+lit 	lt 	Lithuanian 	lietuvių kalba
+lol 	  	Mongo 	
+loz 	  	Lozi 	siLozi
+ltz 	lb 	Luxembourgish, Letzeburgesch 	Lëtzebuergesch
+lua 	  	Luba-Lulua 	lwaà:
+lub 	lu 	Luba-Katanga 	
+lug 	lg 	Luganda 	Luganda
+lui 	  	Luiseño 	
+lun 	  	Lunda 	chiLunda
+luo 	  	Luo (Kenya and Tanzania) 	Dholuo
+lus 	  	Lushai 	
+mac/mkd 	mk 	Macedonian 	македонски јазик
+mad 	  	Madurese 	
+mag 	  	Magahi 	
+mah 	mh 	Marshallese 	Kajin M̧ajeļ
+mai 	  	Maithili 	मैथिली
+mak 	  	Makasar 	
+mal 	ml 	Malayalam 	മലയാളം
+man 	  	Mandingo 	 	macrolanguage
+mao/mri 	mi 	Māori 	te reo Māori
+map 	  	Austronesian languages 	 	collection
+mar 	mr 	Marathi 	मराठी
+mas 	  	Maasai 	ɔl Maa
+may/msa 	ms 	Malay 	bahasa Melayu, بهاس ملايو 	macrolanguage
+mdf 	  	Moksha 	мокшень кяль
+mdr 	  	Mandar 	
+men 	  	Mende 	Mɛnde
+mga 	  	Middle Irish (900–1200) 	Gaoidhealg 	historic
+mic 	  	Mi'kmaq, Micmac 	Míkmaq, Mi'gmaq
+min 	  	Minangkabau 	Baso Minangkabau
+mis 	  	Uncoded languages 	
+mkh 	  	Mon-Khmer languages 	 	collection
+mlg 	mg 	Malagasy 	Malagasy fiteny 	macrolanguage
+mlt 	mt 	Maltese 	Malti
+mnc 	  	Manchu 	ᠮᠠᠨᠵᡠ ᡤᡳᠰᡠᠨ ᠪᡝ
+mni 	  	Manipuri 	মৈইতৈইলোন
+mno 	  	Manobo languages 	 	collection
+moh 	  	Mohawk 	Kanien’keha
+mon 	mn 	Mongolian 	монгол хэл 	macrolanguage
+mos 	  	Mossi 	Mòoré
+mul 	  	Multiple languages 	
+mun 	  	Munda languages 	 	collection
+mus 	  	Creek 	Maskoki, Mvskokē empunakv
+mwl 	  	Mirandese 	Lhéngua Mirandesa
+mwr 	  	Marwari 	मारवाड़ी 	macrolanguage
+myn 	  	Mayan languages 	 	collection
+myv 	  	Erzya 	эрзянь кель
+nah 	  	Nahuatl 	nāhuatl, nawatlahtolli 	collection
+nai 	  	North American Indian languages 	 	collection
+nap 	  	Neapolitan 	napulitano
+nau 	na 	Nauruan 	Ekakairũ Naoero
+nav 	nv 	Navajo, Navaho 	Diné bizaad, Dinékʼehǰí
+nbl 	nr 	Southern Ndebele 	isiNdebele
+nde 	nd 	Northern Ndebele 	isiNdebele
+ndo 	ng 	Ndonga 	Owambo
+nds 	  	Low German, Low Saxon 	Nederdüütsch, Plattdüütsch
+nep 	ne 	Nepali 	नेपाली
+new 	  	Nepal Bhasa, Newari 	Nepal Bhasa
+nia 	  	Nias 	
+nic 	  	Niger-Kordofanian languages 	 	collection
+niu 	  	Niuean 	ko e vagahau Niuē, faka-Niue
+nno 	nn 	Norwegian Nynorsk 	nynorsk
+nob 	nb 	Norwegian Bokmål 	bokmål
+nog 	  	Nogai 	ногай тили
+non 	  	Old Norse 	norskr 	historic
+nor 	no 	Norwegian 	norsk 	macrolanguage
+nqo 	  	N'Ko 	
+nso 	  	Northern Sotho, Pedi, Sepedi 	Sesotho sa Leboa, Sepedi
+nub 	  	Nubian languages 	 	collection
+nwc 	  	Classical Newari, Old Newari, Classical Nepal Bhasa 	 	historic
+nya 	ny 	Chichewa, Chewa, Nyanja 	chiCheŵa, chinyanja
+nym 	  	Nyamwezi 	Kinyamwezi
+nyn 	  	Nyankole 	
+nyo 	  	Nyoro 	Runyoro
+nzi 	  	Nzima 	
+oci 	oc 	Occitan (1500–) 	Occitan
+oji 	oj 	Ojibwa 	ᐊᓂᔑᓇᐯᒧᐏᐣ (Anishinaabemowin) 	macrolanguage
+ori 	or 	Oriya 	ଓଡ଼ିଆ
+orm 	om 	Oromo 	Afaan Oromoo 	macrolanguage
+osa 	  	Osage 	
+oss 	os 	Ossetian, Ossetic 	ирон ӕвзаг
+ota 	  	Turkish, Ottoman (1500–1928) 	 	historic
+oto 	  	Otomian languages 	 	collection
+paa 	  	Papuan languages 	 	collection
+pag 	  	Pangasinan 	
+pal 	  	Pahlavi, (Middle Persian) 	 	ancient
+pam 	  	Pampanga, Kapampangan 	Kapampangan
+pan 	pa 	Punjabi, Panjabi 	ਪੰਜਾਬੀ, پنجابی 	(separate from Lahnda (lah))
+pap 	  	Papiamento 	Papiamentu
+pau 	  	Palauan 	tekoi ra Belau
+peo 	  	Old Persian (ca. 600–400 BC) 	 	historic
+per/fas 	fa 	Persian 	فارسی 	macrolanguage
+phi 	  	Philippine languages 	 	collection
+phn 	  	Phoenician 	 	ancient
+pli 	pi 	Pali 	पालि 	ancient
+pol 	pl 	Polish 	polski
+pon 	  	Pohnpeian 	
+por 	pt 	Portuguese 	português
+pra 	  	Prakrit 	 	collection
+pro 	  	Old Provençal, Old Occitan (–1500) 	 	historic
+pus 	ps 	Pashto language, Pashto 	پښتو 	macrolanguage
+qaa-qtz 	  	Reserved for local use 	
+que 	qu 	Quechua 	Runa Simi, Kichwa 	macrolanguage
+raj 	  	Rajasthani 	राजस्थानी 	macrolanguage
+rap 	  	Rapanui 	rapanui, pepito ote henua
+rar 	  	Rarotongan, Cook Islands Maori 	
+roa 	  	Romance languages 	 	collection
+roh 	rm 	Romansh 	rumantsch grischun
+rom 	  	Romany 	rromani ćhib, Romani šib, Romanó 	macrolanguage
+rum/ron 	ro 	Romanian 	română
+run 	rn 	Rundi 	Rundi
+rup 	  	Aromanian, Arumanian, Macedo-Romanian 	Armãneashce, Armãneashti, Limba armãneascã
+rus 	ru 	Russian 	русский язык
+sad 	  	Sandawe 	
+sag 	sg 	Sango 	yângâ tî sängö
+sah 	  	Yakut 	Саха тыла
+sai 	  	South American Indian languages 	 	collection
+sal 	  	Salishan languages 	 	collection
+sam 	  	Samaritan Aramaic 	ארמית, ܐܪܡܝܐ 	extinct
+san 	sa 	Sanskrit 	संस्कृतम् 	ancient
+sas 	  	Sasak 	
+sat 	  	Santali 	संथाली
+scn 	  	Sicilian 	Sicilianu
+sco 	  	Scots 	Scots leid, Lallans
+sel 	  	Selkup 	шӧльӄумыт әты
+sem 	  	Semitic languages 	 	collection
+sga 	  	Old Irish (to 900) 	Goídelc 	historic
+sgn 	  	Sign languages 	 	collection
+shn 	  	Shan 	
+sid 	  	Sidamo 	Sidámo 'Afó
+sin 	si 	Sinhalese, Sinhala 	සිංහල
+sio 	  	Siouan languages 	 	collection
+sit 	  	Sino-Tibetan languages 	 	collection
+sla 	  	Slavic languages 	 	collection
+slk/slo 	sk 	Slovak 	slovenčina
+slv 	sl 	Slovenian 	slovenščina
+sma 	  	Southern Sami 	saemien giele
+sme 	se 	Northern Sami 	sámi, sámegiella
+smi 	  	Sami languages 	 	collection
+smj 	  	Lule Sami 	sámegiella
+smn 	  	Inari Sami 	säämegiella
+smo 	sm 	Samoan 	gagana fa'a Samoa
+sms 	  	Skolt Sami 	sääʼmǩiõll
+sna 	sn 	Shona 	chiShona
+snd 	sd 	Sindhi 	سنڌي، سندھی, सिन्धी
+snk 	  	Soninke 	Soninkanxaane
+sog 	  	Sogdian 	 	ancient
+som 	so 	Somali 	Soomaaliga, af Soomaali
+son 	  	Songhay languages 	 	collection
+sot 	st 	Southern Sotho 	Sesotho
+spa 	es 	Spanish, Castilian 	español, castellano
+srd 	sc 	Sardinian 	sardu 	macrolanguage
+srn 	  	Sranan Tongo 	
+srp 	sr 	Serbian 	српски језик, srpski jezik
+srr 	  	Serer 	
+ssa 	  	Nilo-Saharan languages 	 	collection
+ssw 	ss 	Swati 	siSwati
+suk 	  	Sukuma 	
+sun 	su 	Sundanese 	basa Sunda
+sus 	  	Susu 	
+sux 	  	Sumerian 	eme-ĝir 	ancient
+swa 	sw 	Swahili 	Kiswahili 	macrolanguage
+swe 	sv 	Swedish 	svenska
+syc 	  	Classical Syriac 	 	historic
+syr 	  	Syriac (Northeastern Neo-Aramaic) 	ܣܘܪܝܝܐ 	macrolanguage
+tah 	ty 	Tahitian 	te reo Tahiti, te reo Māʼohi
+tai 	  	Tai languages 	 	collection
+tam 	ta 	Tamil 	தமிழ்
+tat 	tt 	Tatar 	татарча, tatarça, تاتارچا
+tel 	te 	Telugu 	తెలుగు
+tem 	  	Time 	
+ter 	  	Tereno 	
+tet 	  	Tetum 	Tetun
+tgk 	tg 	Tajik 	тоҷикӣ, تاجیکی
+tgl 	tl 	Tagalog 	Wikang Tagalog, ᜏᜒᜃᜅ᜔ ᜆᜄᜎᜓᜄ᜔
+tha 	th 	Thai 	ภาษาไทย
+tib/bod 	bo 	Tibetan 	བོད་ཡིག
+tig 	  	Tigre 	Tigré, Khasa
+tir 	ti 	Tigrinya 	ትግርኛ
+tiv 	  	Tiv 	
+tkl 	  	Tokelau 	Tokelau
+tlh 	  	Klingon, tlhIngan-Hol 	tlhIngan Hol 	constructed
+tli 	  	Tlingit 	Lingít
+tmh 	  	Tamashek 	Tamajeq 	macrolanguage
+tog 	  	Tonga (Nyasa) 	chiTonga
+ton 	to 	Tonga (Tonga Islands) 	faka-Tonga
+tpi 	  	Tok Pisin 	Tok Pisin
+tsi 	  	Tsimshian 	
+tsn 	tn 	Tswana 	Setswana
+tso 	ts 	Tsonga 	Xitsonga
+tuk 	tk 	Turkmen 	Түркмен
+tum 	  	Tumbuka 	chiTumbuka
+tup 	  	Tupian languages 	Nheengatu
+tur 	tr 	Turkish 	Türkçe
+tut 	  	Altaic languages 	 	collection
+tvl 	  	Tuvalu 	'gana Tuvalu
+twi 	tw 	Twi 	
+tyv 	  	Tuvinian 	тыва дыл
+udm 	  	Udmurt 	удмурт кыл
+uga 	  	Ugaritic 	 	ancient
+uig 	ug 	Uighur, Uyghur 	Uyƣurqə, Uyğurçe, ئۇيغۇرچ
+ukr 	uk 	Ukrainian 	українська мова
+umb 	  	Umbundu 	úmbúndú
+und 	  	Undetermined language 	
+urd 	ur 	Urdu 	اردو
+uzb 	uz 	Uzbek 	O'zbek, Ўзбек, أۇزبېك 	macrolanguage
+vai 	  	Vai 	
+ven 	ve 	Venda 	Tshivenḓa
+vie 	vi 	Vietnamese 	Tiếng Việt
+vol 	vo 	Volapük 	Volapük 	constructed
+vot 	  	Votic 	vaďďa tšeeli
+wak 	  	Wakashan languages 	 	collection
+wal 	  	Wolaytta, Wolaitta 	
+war 	  	Waray-Waray 	Winaray, Lineyte-Samarnon
+was 	  	Washo 	
+wel/cym 	cy 	Welsh 	Cymraeg
+wen 	  	Sorbian languages 	 	collection
+wln 	wa 	Walloon 	walon
+wol 	wo 	Wolof 	Wolof
+xal 	  	Kalmyk, Oirat 	хальмг келн
+xho 	xh 	Xhosa 	isiXhosa
+yao 	  	Yao 	Chiyao
+yap 	  	Yapese 	
+yid 	yi 	Yiddish 	ייִדיש 	macrolanguage
+yor 	yo 	Yoruba 	Yorùbá
+ypk 	  	Yupik languages 	 	collection
+zap 	  	Zapotec 	 	macrolanguage
+zbl 	  	Blissymbols, Blissymbolics, Bliss 	 	constructed
+zen 	  	Zenaga 	Tuḍḍungiyya
+zha 	za 	Zhuang, Chuang 	Saɯ cueŋƅ, Saw cuengh 	macrolanguage
+znd 	  	Zande languages 	Pazande 	collection
+zul 	zu 	Zulu 	isiZulu
+zun 	  	Zuni 	Shiwi
+zxx 	  	No linguistic content; not applicable 	
+zza 	  	Zaza, Dimili, Dimli, Kirdki, Kirmanjki, Zazaki 	 	macrolanguage

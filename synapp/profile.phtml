@@ -1,0 +1,319 @@
+<?php
+session_start();
+if ((!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) && (!isset($_SESSION['adm']) || $_SESSION['adm'] !== true)) {
+    header("Location: login.phtml?location=profile.phtml");
+    die();
+}
+
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+
+require_once dirname(
+        __FILE__
+    ) . '/account/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
+
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+if (isset($_POST['interface_language'])) {
+    $_SESSION['if_lang'] = $_POST['interface_language'];
+}
+if ($_SESSION['if_lang'] === 'eng') {
+    setlocale(LC_ALL, 'en_US.utf8');
+} elseif ($_SESSION['if_lang'] === 'spa') {
+    setlocale(LC_ALL, 'es_ES.utf8');
+} elseif ($_SESSION['if_lang'] === 'glg') {
+    setlocale(LC_ALL, 'gl_ES.utf8');
+} elseif ($_SESSION['if_lang'] === 'pol') {
+    setlocale(LC_ALL, 'pl_PL.utf8');
+}
+$langfile = 'profiletxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . '/languages/get_language_by_iso6392_code.php';
+require_once dirname(__FILE__) . '/languages/get_all_languages_list.php';
+require_once dirname(__FILE__) . '/languages/get_interface_languages_list.php';
+require_once dirname(__FILE__) . '/selectors/option_list.php';
+require_once dirname(__FILE__) . '/account/process_avatar.php';
+require_once dirname(__FILE__) . '/account/user_email_exist.php';
+require_once dirname(__FILE__) . '/account/parsers.php';
+require_once dirname(__FILE__) . '/account/profile_edit.php';
+require_once dirname(__FILE__) . '/account/process_registration_form.php';
+require_once dirname(__FILE__) . '/account/process_login.php';
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+
+$_SESSION['justlogged'] = false;
+
+$levels = eval (STUDIES_LEVELS_LIST);
+$types = eval (STUDIES_TYPES_LIST);
+
+$lua = isset($_SESSION['user_array'])?$_SESSION['user_array']:$_SESSION['adm_array'];
+$bAdm = isset($_SESSION['adm']);
+$link = connect();
+if (isset($_GET['user'])) {
+    if (!parse($_GET['user'], 3, 32)) {
+        $user = $_GET['user'];
+        $sql = "SELECT * FROM users WHERE user = :user";
+        $stmt = $link->prepare($sql);
+        $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+        $stmt->execute();
+        if (!($ua = $stmt->fetch(PDO::FETCH_ASSOC))) {
+            $link = null;
+            die("Invalid request.");
+        }
+    } else {
+        $link = null;
+        die ("Invalid request.");
+    }
+} else {
+    $ua = $lua;
+    $user = $ua['user'];
+}
+$editable = ($lua['user'] === $user) ? true : false;
+if (!$bAdm && (!$editable) && (ord($ua['hprofile']) === 1)) {
+    $link = null;
+    die ("Invalid request.");
+}
+$edit = (isset($_GET['edit'])) ? $_GET['edit'] : ((isset($_POST['edit'])) ? $_POST['edit'] : "");
+ob_start();
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title><?php echo PR_TITLE1 . $ua['user'] . PR_TITLE2; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+    <script type="text/javascript" src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+    <script type="text/javascript">
+        focusId = '<?php echo isset($_POST['focusId'])?$_POST['focusId']:(isset($_GET['edit'])?$_GET['edit']:""); ?>';
+        function doFocus() {
+            if (focusId != '') {
+                if (document.getElementById(focusId)) {
+                    document.getElementById(focusId).focus();
+                }
+            }
+        }
+        function stopRKey(evt) {
+            var node;
+            evt = (evt) ? evt : ((event) ? event : null);
+            node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+            if ((evt.keyCode == 13) && (node.type == "text")) {
+                document.getElementById('editForm').submit();
+            }
+        }
+        document.onkeypress = stopRKey;
+    </script>
+</head>
+<body onload="doFocus();">
+<div id="wrap">
+    <div id="content">
+        <?php
+        $page = "profile";
+        require_once dirname(__FILE__) . '/watrixbar.phtml';
+        echo '<div style="text-align:left;"><h1>' . PR_HEADER . strtoupper($ua['user']) . '</h1>' . PHP_EOL;
+        ?>
+        <script type="text/javascript">
+            $(document).ready(function(){$('.date').each(function(){$(this).text(new Date(parseInt($(this).text())*1000).toLocaleString(<?php echo $_SESSION['if_lang']==='spa'?"'es'":($_SESSION['if_lang']==='eng'?"'en'":($_SESSION['if_lang']==='pol'?"'pl'":'window.navigator.userLanguage || window.navigator.language')); ?>,{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }));});});
+        </script>
+        <?php
+        if ($ua['avatar'] !== "") {
+            echo "<img src=\"uploads/avatars/" . $ua['avatar'] . "\" alt=\"" . $ua['user'] . "\" title=\"" . $ua['user'] . "\" /><br />" . PHP_EOL;
+        }
+        if ($editable) {
+            $_SESSION['user_array'] = $ua;
+            if ($edit === "hlast_login" || $edit === "hprofile" || $edit === "hstats") {
+                $sql = "UPDATE users SET {$edit}=({$edit}+1)%2 WHERE user = :user";
+                $stmt = $link->prepare($sql);
+                $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+                $stmt->execute();
+                $_SESSION['user_array'][$edit] = chr((ord($_SESSION['user_array'][$edit]) + 1) % 2);
+            }
+            echo '<a href="profile.phtml?user='.$user.'&amp;edit=hprofile">';
+            echo ord($_SESSION['user_array']['hprofile']) ? PR_SHOWALL : PR_HIDEALL;
+            echo "</a><br /><br />" . PHP_EOL;
+            if ($edit !== "password") {
+                echo PR_PASSWORD . ": ********** [<a href=\"profile.phtml?user=" .
+                    $user . "&amp;edit=password\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            } else {
+                change_pass_form($edit, $link);
+            }
+            $fed = true;
+            if ($edit == "gender") {
+                $fed = change_gender(PR_GENDER, $edit, $link);
+            }
+            if ($fed) {
+                echo PR_GENDER . ': ';
+                echo ($_SESSION['user_array']['gender'] === "M") ? PR_MALE : (($_SESSION['user_array']['gender'] === "F") ? PR_FEMALE : '');
+                echo " ";
+                echo (ord($_SESSION['user_array']['hgender']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=gender\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "birthday") {
+                $fed = change_birthday(PR_BIRTHDAY, $edit, $link);
+            }
+            if ($fed) {
+                echo PR_BIRTHDAY . ': ';
+                echo (isset($_SESSION['user_array']['birthday'])?strftime('%B, %Y', strtotime($_SESSION['user_array']['birthday'])):'') . " ";
+                echo (ord($_SESSION['user_array']['hbirthday']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=birthday\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "input_language") {
+                $fed = change_selector(PR_INL, $edit, $link);
+                if ($fed) {
+                    echo "<script type=\"text/javascript\">window.location=\"profile.phtml\";</script>";
+                }
+            }
+            if ($fed) {
+                echo PR_INL . ': ';
+                echo get_language_by_iso6392_code($_SESSION['user_array']['input_language'], $link) . " ";
+                echo (ord($_SESSION['user_array']['hinput_language']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=input_language\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            /*if ($edit=="interface_language"){
+                $fed=change_selector(PR_IFL,$edit,$link);
+            } if ($fed) {echo PR_IFL . ': '; echo get_language_by_iso6392_code($_SESSION['user_array']['interface_language'], $link) . " ";echo (ord($_SESSION['user_array']['hinterface_language'])?PR_HIDDEN:PR_VISIBLE) 
+            . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=interface_language\">".PR_EDIT."</a>]<br />".PHP_EOL;}
+            $fed=true;*/
+            if ($edit == "studies") {
+                $fed = change_text(PR_STUDIES, $edit, $link);
+            }
+            if ($fed) {
+                echo PR_STUDIES . ': ' . $_SESSION['user_array']['studies'] . " ";
+                echo (ord($_SESSION['user_array']['hstudies']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=studies\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "studies_type") {
+                $fed = change_selector(PR_STUDIES_TYPE, $edit, $link);
+            }
+            if ($fed) {
+                echo PR_STUDIES_TYPE . ': ';
+                echo isset($_SESSION['user_array']['studies_type']) && isset($types[$_SESSION['user_array']['studies_type']]) ? $types[$_SESSION['user_array']['studies_type']]['name'] : "";
+                echo " ";
+                echo (ord($_SESSION['user_array']['hstudies_type']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=studies_type\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "studies_level") {
+                $fed = change_selector(PR_STUDIES_LEVEL, $edit, $link);
+            }
+            if ($fed) {
+                echo PR_STUDIES_LEVEL . ': ' . (isset($_SESSION['user_array']['studies_level'])&&isset($levels[$_SESSION['user_array']['studies_level']])?$levels[$_SESSION['user_array']['studies_level']]['name']:'') . " ";
+                echo (ord($_SESSION['user_array']['hstudies_level']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user
+                    . "&amp;edit=studies_level\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "occupation") {
+                $fed = change_text(PR_OCCUPATION, $edit, $link);
+            }
+            if ($fed) {
+                echo PR_OCCUPATION . ': ' . $_SESSION['user_array']['occupation'] . " ";
+                echo (ord($_SESSION['user_array']['hoccupation']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=occupation\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "email") {
+                $fed = change_email($edit, $link);
+            }
+            if ($fed) {
+                echo PR_EMAIL . ': ' . $_SESSION['user_array']['email'] . " ";
+                echo (ord($_SESSION['user_array']['hemail']) ? PR_HIDDEN : PR_VISIBLE)
+                    . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=email\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            $fed = true;
+            if ($edit == "avatar") {
+                $fed = change_avatar($edit, $_SESSION['user_array']['user'], $link);
+            }
+            if ($fed) {
+                echo PR_AVATAR . ': ' . $_SESSION['user_array']['avatar'] . " [<a href=\"profile.phtml?user=" . $user . "&amp;edit=avatar\">" . PR_EDIT . "</a>]<br />" . PHP_EOL;
+            }
+            echo PR_ACTIVE . ': <span class="date">' .  $_SESSION['user_array']['firstdate'] . "</span> [<a href=\"#\" onclick=\"javascript:window.open('unregister.phtml', 'SynAPP','location=0,status=0,scrollbars=0,resizable=0,width=440,height=210')\">DELETE ACCOUNT</a>]<br />" . PHP_EOL;
+            echo PR_LAST_LOGIN . ': <span class="date">' . $_SESSION['user_array']['last_login'] . "</span> " . PR_FROM . " " . long2ip($_SESSION['user_array']['ip']) . " [<a href=\"profile.phtml?user="
+                . $user . "&amp;edit=hlast_login\">";
+            echo ord($_SESSION['user_array']['hlast_login']) ? PR_SHOW : PR_HIDE;
+            echo "</a>]<br />" . PHP_EOL;
+            echo ord($_SESSION['user_array']['hstats']) ? PR_HIDE_STATS : PR_SHOW_STATS;
+            echo " [<a href=\"profile.phtml?user="
+                . $user . "&amp;edit=hstats\">";
+            echo ord($_SESSION['user_array']['hstats']) ? PR_SHOW : PR_HIDE;
+            echo "</a>]<br />" . PHP_EOL;
+        } else {
+            if ($bAdm || !ord($ua['hgender'])) {
+                echo PR_GENDER . ': ';
+            }
+            echo ($ua['gender'] === "M") ? PR_MALE : PR_FEMALE;
+            echo "<br />" . PHP_EOL;
+            if ($bAdm || !ord($ua['hbirthday'])) {
+                echo PR_BIRTHDAY . ': ';
+            }
+            echo strftime('%B, %Y', strtotime($ua['birthday'])) . "<br />" . PHP_EOL;
+            if ($bAdm || !ord($ua['hinput_language'])) {
+                echo PR_INL . ': ' . get_language_by_iso6392_code(
+                        $ua['input_language'],
+                        $link
+                    ) . "<br />" . PHP_EOL;
+            }
+            //if (!ord($ua['hinterface_language'])) echo PR_IFL . ': ' . get_language_by_iso6392_code($ua['interface_language'],$link) . "<br />".PHP_EOL;
+            if ($bAdm || !ord($ua['hstudies'])) {
+                echo PR_STUDIES . ': ' . $ua['studies'] . "<br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord(
+                $ua['hstudies_type']
+            )
+            ) {
+                echo PR_STUDIES_TYPE . ': ' . (isset($types[$ua['studies_type']])?$types[$ua['studies_type']]['name']:'') . "<br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord(
+                $ua['hstudies_level']
+            )
+            ) {
+                echo PR_STUDIES_LEVEL . ': ' . $levels[$ua['studies_level']]['name'] . "<br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord($ua['hoccupation'])) {
+                echo PR_OCCUPATION . ': ' . $ua['occupation'] . "<br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord($ua['hemail'])) {
+                echo PR_EMAIL . ': ' . $ua['email'] . "<br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord($ua['hfirstdate'])) {
+                echo PR_ACTIVE . ': <span class="date">' . $ua['firstdate'] . "</span><br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord($ua['hlast_login'])) {
+                echo PR_LAST_LOGIN . ': <span class="date">' . $ua['last_login'] . "</span> "
+                    . PR_FROM . " " . long2ip($ua['ip']) . "<br />" . PHP_EOL;
+            }
+            if ($bAdm || !ord(
+                $ua['hstats']
+            )
+            ) {
+                echo "<a href='stats.phtml?user=" . $ua['user'] . "' target='_blank'>" . PR_STATS . "</a><br />" . PHP_EOL;
+            }
+        }
+        echo "</div>";
+        ?>
+    </div>
+</div>
+</body>
+</html>
+<?php
+$link = null;
+ob_end_flush();

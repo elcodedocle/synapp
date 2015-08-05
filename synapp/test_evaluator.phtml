@@ -1,0 +1,595 @@
+<?php
+
+session_start();
+
+if (isset($_GET['ttype'])) {
+
+    $ttype = $_GET['ttype'];
+    $redir = urlencode('?ttype=' . $ttype);
+
+} elseif (isset($_POST['ttype'])) {
+
+    $ttype = $_POST['ttype'];
+    $redir = urlencode('?ttype=' . $ttype);
+
+} else {
+
+    $ttype = "";
+    $redir = "";
+
+}
+
+if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
+
+    header("Location: login.phtml?location=test_evaluator.phtml" . $redir);
+    die();
+
+}
+
+if (ord($_SESSION['user_array']['confirmed_email']) === 0) {
+
+    header("Location: profile.phtml?user=" . $_SESSION['user_array']['user'] . "&edit=email&alert=true");
+    die();
+
+}
+
+$_SESSION['justlogged'] = false;
+
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+
+require_once dirname(
+        __FILE__
+    ) . '/account/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
+
+require_once dirname(__FILE__) . '/connect.php';
+
+if (!isset($_SESSION['if_lang'])) {
+
+    $_SESSION['if_lang'] = "eng";
+
+}
+
+$link = connect();
+
+/* process answer voting form */
+if (count($_POST)) {
+    
+    require_once dirname(__FILE__) . '/test/process_test_evaluation.php';
+
+    switch(strtolower($_POST['lang'])){
+        case 'spa':
+        case 'esp': $lang='spa';
+                    break;
+        case 'pol': 
+        case 'pl':  $lang='pol';
+                    break;
+        case 'gal':
+        case 'gl':  $lang = 'gal';
+                    break;
+        default: $lang = 'eng';
+    }
+
+    if (
+        !isset($_SESSION['rand_ticket']) || 
+        hash(
+            "sha256",
+            $_SESSION['rand_ticket'] . $_SESSION['otheruser'] . $_SESSION['ttypeid'] . $_SESSION['tresourceid'] . $_SESSION['dgid']
+        ) !== $_POST['ticket']
+    ) {
+        die ("Bad ticket.");
+    }
+
+    unset($_SESSION['hashed_ticket']);
+    unset($_SESSION['rand_ticket']);
+
+    $user = $_SESSION['otheruser'];
+    $ttypeid = $_SESSION['ttypeid'];
+    $tresourceid = $_SESSION['tresourceid'];
+    $dgid = $_SESSION['dgid'];
+    
+    process_test_evaluation($link, $ttype, $user, $ttypeid, $tresourceid, $_SESSION['user_array']['user'], $lang);
+    
+    $ttype = '';
+
+}
+
+$lang = $_SESSION['user_array']['input_language'];
+
+/* set parameters for evaluating word equation puzzle (ditloid) test answer */
+if (
+    ($ttype === '' || $ttype === 'ditloid')
+    &&
+    ($_SESSION['user_array']['ditloid_lock_timestamp'] > 0)
+    &&
+    ((time() - $_SESSION['user_array']['ditloid_time_left_when_locked']) > 0)
+) {
+
+    $lttype[0]['ttype'] = "ditloid";
+    $lttype[0]['starttimefieldname'] = "ditloid_time_left_when_locked";
+    $lttype[0]['endtimefieldname'] = "ditloid_lock_timestamp";
+    $lttype[0]['langfilename'] = "devaltxt.php";
+    $lttype[0]['testlangfilename'] = "ditloidstxt.php";
+
+    $lttype[0]['ttypeid'] = '';
+    $lttype[0]['tresourceid'] = '';
+    $lttype[0]['dgid'] = 0;
+    $lttype[0]['rest'] = ' t1.dgid = 0  ';
+
+    $lttype[0]['t1'] = 'vditloid_values';
+    $lttype[0]['t2'] = 'ditloid_results';
+
+}
+
+/* set parameters for evaluating uses for an object test answer */
+if (
+    ($ttype === '' || $ttype === 'utest')
+    &&
+    ($_SESSION['user_array']['timer_utestb_start'] > 0)
+    &&
+    ((time() - $_SESSION['user_array']['timer_utestb_end']) > 0)
+) {
+
+    $lttype[1]['ttype'] = "utest";
+    $lttype[1]['starttimefieldname'] = "timer_utestb_start";
+    $lttype[1]['endtimefieldname'] = "timer_utestb_end";
+    $lttype[1]['langfilename'] = "uevaltxt.php";
+    $lttype[1]['testlangfilename'] = "usestxt.php";
+
+    $lttype[1]['ttypeid'] = 2;
+    $lttype[1]['tresourceid'] = 7;
+    $lttype[1]['rest'] = ' t1.ttypeid = 2 AND t1.tresourceid = 7 ';
+    $lttype[1]['dgid'] = '';
+
+    $lttype[1]['t1'] = 'test_results';
+    $lttype[1]['t2'] = 'test_evaluations';
+
+}
+
+/* set parameters for evaluating common property test answer */
+if (
+    ($ttype === '' || $ttype === 'ctest')
+    &&
+    ($_SESSION['user_array']['timer_ctestb_start'] > 0)
+    &&
+    ((time() - $_SESSION['user_array']['timer_ctestb_end']) > 0)
+) {
+
+    $lttype[2]['ttype'] = "ctest";
+    $lttype[2]['starttimefieldname'] = "timer_ctestb_start";
+    $lttype[2]['endtimefieldname'] = "timer_ctestb_end";
+    $lttype[2]['langfilename'] = "cevaltxt.php";
+    $lttype[2]['testlangfilename'] = "commonstxt.php";
+
+    $lttype[2]['ttypeid'] = 1;
+    $lttype[2]['tresourceid'] = 3;
+    $lttype[2]['rest'] = ' t1.ttypeid = 1 AND t1.tresourceid = 3 ';
+    $lttype[2]['dgid'] = '';
+
+    $lttype[2]['t1'] = 'test_results';
+    $lttype[2]['t2'] = 'test_evaluations';
+
+}
+
+/* set parameters for evaluating uses for an object test answer */
+if (
+    ($ttype === '' || $ttype === 'utesta')
+    &&
+    ($_SESSION['user_array']['timer_utesta_start'] > 0)
+    &&
+    ((time() - $_SESSION['user_array']['timer_utesta_end']) > 0)
+) {
+
+    $lttype[3]['ttype'] = "utest";
+    $lttype[3]['starttimefieldname'] = "timer_utesta_start";
+    $lttype[3]['endtimefieldname'] = "timer_utesta_end";
+    $lttype[3]['langfilename'] = "uevaltxt.php";
+    $lttype[3]['testlangfilename'] = "usestxt.php";
+
+    $lttype[3]['ttypeid'] = 2;
+    $lttype[3]['tresourceid'] = 5;
+    $lttype[3]['rest'] = ' t1.ttypeid = 2 AND t1.tresourceid = 5 ';
+    $lttype[3]['dgid'] = '';
+
+    $lttype[3]['t1'] = 'test_results';
+    $lttype[3]['t2'] = 'test_evaluations';
+
+}
+
+/* set parameters for evaluating common property test answer */
+if (
+    ($ttype === '' || $ttype === 'ctesta')
+    &&
+    ($_SESSION['user_array']['timer_ctesta_start'] > 0)
+    &&
+    ((time() - $_SESSION['user_array']['timer_ctesta_end']) > 0)
+) {
+
+    $lttype[4]['ttype'] = "ctesta";
+    $lttype[4]['starttimefieldname'] = "timer_ctesta_start";
+    $lttype[4]['endtimefieldname'] = "timer_ctesta_end";
+    $lttype[4]['langfilename'] = "cevaltxt.php";
+    $lttype[4]['testlangfilename'] = "commonstxt.php";
+    
+    $lttype[4]['ttypeid'] = 1;
+    $lttype[4]['tresourceid'] = 1;
+    $lttype[4]['rest'] = ' t1.ttypeid = 1 AND t1.tresourceid = 1 ';
+    $lttype[4]['dgid'] = '';
+
+    $lttype[4]['t1'] = 'test_results';
+    $lttype[4]['t2'] = 'test_evaluations';
+
+}
+
+if (!isset($lttype)) {
+
+    /* You have to take the test before evaluating it */
+    echo "<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=\"utf-8\">
+        <title>" . TEV_ALERT_TITLE . "</title>
+        <script type='text/javascript'>
+            alert(\"" . TEV_ALERT . "\");
+            window.location='test_will_shortz_morgan_worthy_ditloid.phtml';
+        </script>
+    </head>
+    <body></body>
+</html>";
+
+    die;
+
+}
+
+unset($ttype);
+
+shuffle($lttype);
+
+$langfilename = "";
+$testlangfilename = "";
+$working_group = '';
+$tresourceid = null;
+foreach ($lttype as $selectedttype) {
+
+    // selects the user and item to be evaluated
+    $sql = "SELECT 
+        u1.`user`,
+        u1.`working_group`,
+        u1.`{$selectedttype['starttimefieldname']}`,
+        u1.`{$selectedttype['endtimefieldname']}`
+    FROM `users` u1
+    INNER JOIN `{$selectedttype['t1']}` t1
+    ON t1.`user` = u1.`user`
+    LEFT JOIN `{$selectedttype['t2']}` t2
+    ON t2.`user` = u1.`user` AND t2.`evaluator` = '{$_SESSION['user_array']['user']}'
+    WHERE
+        t1.`lang` = '{$_SESSION['user_array']['input_language']}' AND {$selectedttype['rest']}
+    AND
+        u1.`user` != '{$_SESSION['user_array']['user']}'
+    AND
+        u1.`{$selectedttype['endtimefieldname']}` > 0
+    AND
+        u1.`{$selectedttype['endtimefieldname']}` < UNIX_TIMESTAMP(CURRENT_TIMESTAMP)
+    AND
+        t2.`evaluator` IS NULL
+    GROUP BY
+        u1.`user`,
+        u1.`working_group`,
+        u1.`{$selectedttype['starttimefieldname']}`,
+        u1.`{$selectedttype['endtimefieldname']}`
+    ORDER BY RAND()
+    LIMIT 1";
+
+    $stmt = $link->query($sql);
+    if ($stmt === false || $stmt->rowCount() < 1) {
+
+        continue;
+
+    } elseif ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+        $ttype = $selectedttype['ttype'];
+
+        $starttimefieldname = $selectedttype['starttimefieldname'];
+        $endtimefieldname = $selectedttype['endtimefieldname'];
+
+        $langfilename = $selectedttype['langfilename'];
+        $testlangfilename = $selectedttype['testlangfilename'];
+
+        $user = $row['user'];
+        $working_group = $row['working_group'];
+
+        $_SESSION['otheruser'] = $user;
+
+        $ttypeid = $selectedttype['ttypeid'];
+        $tresourceid = $selectedttype['tresourceid'];
+        $dgid = $selectedttype['dgid'];
+
+        $_SESSION['ttypeid'] = $ttypeid;
+        $_SESSION['tresourceid'] = $tresourceid;
+        $_SESSION['dgid'] = $dgid;
+
+        break;
+
+    }
+
+}
+
+$langfile = 'tevaltxt.php';
+
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+
+} else {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+
+}
+
+if (!isset($ttype)) {
+
+    /* No more tests to evaluate right now */
+    echo "<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=\"utf-8\">
+        <title>" . TEV_NOMORE_TITLE . "</title>
+        <script type='text/javascript'>
+            alert(\"" . TEV_NOMORE_ALERT . "\");
+            window.location='supervisor.phtml';
+        </script>
+    </head>
+    <body></body>
+</html>";
+
+    die;
+
+}
+
+$langfile = $langfilename;
+
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+
+} else {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+
+}
+
+$langfile = $testlangfilename;
+
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+
+} else {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+
+}
+
+$test_item = '';
+$stage = '';
+switch ($ttype){
+    case 'utest': $stage = 1; break;
+    case 'utesta': $stage = 2; break;
+    case 'ctest': $stage = 1; break;
+    case 'ctesta': $stage = 2; break;
+}
+$sql = "SELECT * FROM `vgroup_resources` WHERE `resourceid` = :resourceid AND `tresourcelang` = :lang";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':resourceid', $tresourceid, PDO::PARAM_INT);
+$stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+$stmt->execute();
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$test_item = '...'.strtoupper($row['tresourcedesc']);
+
+if (
+    !isset($user) || !is_string($user)
+) {
+
+    die("Catastrophic error. Guru meditation: 9823193.");
+
+}
+
+$_SESSION['rand_ticket'] = hash("sha256", mt_rand());
+
+$ticket = hash(
+    "sha256",
+    $_SESSION['rand_ticket'] . $_SESSION['otheruser'] . $_SESSION['ttypeid'] . $_SESSION['tresourceid'] . $_SESSION['dgid']
+);
+if ($ttype === 'ditloid'){
+    
+    $sql = "SELECT * FROM `vditloid_values` WHERE user = '{$user}' AND lang = '{$_SESSION['user_array']['input_language']}' AND dgid = 0 ORDER BY did, wid";
+    
+} else {
+    
+    $sql = "SELECT * FROM `test_results` WHERE user = '{$user}' AND ttypeid = '{$ttypeid}' AND tresourceid = '{$tresourceid}' AND lang = '{$_SESSION['user_array']['input_language']}' ORDER BY resultid";
+    
+}
+
+if (false === ($stmt = $link->query($sql))) {
+
+    error_log(
+        "Guru med. " . ($gmed = mt_rand()) . PHP_EOL
+        . var_export($link->errorInfo(), true) . PHP_EOL
+        . $sql
+    );
+
+    die(
+        "Catastrophic error. Guru meditation: " . $gmed . PHP_EOL
+    );
+
+}
+
+if ($ttype !== 'ditloid') {
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+        $test_user[$row['resultid']] = $row['val'];
+
+    }
+
+} else {
+        
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+        $test_user[$row['did']][$row['wid']] = $row;
+        $ditloids[$row['did']][$row['wid']] = $row;
+
+    }
+
+}
+
+if (isset($test_user) && !empty($test_user)) {
+
+    $keys = array_keys($test_user);
+    $lastid = array_pop($keys);
+
+} else {
+
+    $lastid = 0;
+
+}
+
+$link = null;
+
+?><!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    
+    <title><?php echo TTEV_TITLE; ?></title>
+
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+
+</head>
+
+<body>
+
+<div id="wrap">
+
+    <div id="content">
+
+        <?php
+
+        $page = "test_evaluator";
+        require_once dirname(__FILE__) . '/watrixbar.phtml';
+
+        ?>
+
+        <div style="text-align:center;padding:10px;">
+
+            <h1>
+                <?php echo TTEV_HEADER; ?>
+            </h1>
+
+            <?php if ($ttype != 'ditloid') {
+                echo "<h2>" . TTEV_HEADER_2_1 . $test_item . "</h2>";
+            } ?>
+
+        </div>
+
+        <form enctype="multipart/form-data" method="post">
+
+            <input type="hidden" name="ticket" id="ticket" value="<?php echo $ticket; ?>"/>
+            <input name="ttype" type="hidden" value="<?php echo $ttype; ?>">
+            <input name="lang" type="hidden" value="<?php echo $lang; ?>">
+
+            <table style="margin:auto;">
+
+                <tr>
+
+                    <td>
+
+                        <table class="evaltable" style="margin:auto;">
+
+                            <?php
+
+                            $i = 0;
+                            if (isset($test_user)) {
+
+                                foreach ($test_user as $did => $d) {
+
+                                    echo "<tr>" . PHP_EOL;
+                                    echo "<td id=\"" . $did . "td\"><input type='hidden' name='index_" . $i . "' value='" . $did . "' />" . PHP_EOL;
+
+                                    if ($ttype == 'ditloid' && isset($ditloids)) {
+
+                                        foreach ($d as $wid => $w) {
+
+                                            echo $ditloids[$did][$wid]['pre'];
+                                            echo $ditloids[$did][$wid]['dit'];
+                                            echo "<span id=\"" . $did . "." . $wid . "\">";
+                                            echo isset($test_user[$did]) ? ((trim(
+                                                    $test_user[$did][$wid]['val']
+                                                ) !== '') ? $test_user[$did][$wid]['val'] : '.') : '.';
+                                            echo "</span>";
+                                            echo $ditloids[$did][$wid]['post'] . PHP_EOL;
+
+                                        }
+
+                                    } else {
+
+                                        echo "<span id=\"" . $did . "\">" . $d . "</span>";
+
+                                    }
+
+                                    echo "</td>" . PHP_EOL;
+                                    echo "<td id=\"" . $did . "tde\">" . PHP_EOL;
+                                    echo "<table class='inner' id='inner{$did}'><tr><td><input type='radio' name='" . $did . "_1' value='orgfullvotes' />" . TEV_ORG_FULL;
+                                    echo "</td><td><input type='radio' name='" . $did . "_1' value='orghalfvotes' />" . TEV_ORG_HALF;
+                                    echo "</td><td><input type='radio' name='" . $did . "_1' value='orgzerovotes' checked='checked' />" . TEV_ORG_ZERO;
+                                    echo "</td></tr><tr><td><input type='radio' name='" . $did . "_2' value='cohfullvotes' />" . TEV_COH_FULL;
+                                    echo "</td><td><input type='radio' name='" . $did . "_2' value='cohhalfvotes' />" . TEV_COH_HALF;
+                                    echo "</td><td><input type='radio' name='" . $did . "_2' value='cohzerovotes' checked='checked' />" . TEV_COH_ZERO;
+                                    echo "</td></tr></table></td>" . PHP_EOL;
+                                    echo "</tr>" . PHP_EOL;
+
+                                    $i++;
+
+                                }
+
+                            } else {
+
+                                echo "<tr>" . TEV_NOINPUT . "</tr>";
+
+                            }
+                            ?>
+
+                        </table>
+
+                    </td>
+
+                </tr>
+
+                <tr>
+
+                    <td style="text-align: right;">
+
+                        <input type="submit" value="<?php echo TEV_SEND; ?>"/>
+
+                    </td>
+
+                </tr>
+
+            </table>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

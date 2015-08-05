@@ -1,0 +1,283 @@
+<?php
+session_start();
+if (!isset($_SESSION['auth'])) {
+    header("Location: login.phtml?location=test_will_shortz_morgan_worthy_ditloid.phtml");
+    die();
+}
+if ($_SESSION['auth'] !== true) {
+    header("Location: login.phtml?location=test_will_shortz_morgan_worthy_ditloid.phtml");
+    die();
+}
+$_SESSION['justlogged'] = false;
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'ditloidstxt.php';
+if (file_exists('languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+$link = connect();
+$sql = "SELECT IFNULL(ditloid_lock_timestamp,0) as dls,ditloid_time_left_when_locked FROM users WHERE user = :user";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':user', $_SESSION['user_array']['user'], PDO::PARAM_STR);
+if ($stmt->execute() === false || $stmt->rowCount() < 1) {
+    die("Error 32423.");
+}
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+if (($row['dls'] === 0)) {
+    if (isset($_GET['start']) && (($_SESSION['user_array']['gotestbefore'] == '1') || ($_SESSION['user_array']['gotestafter'] == '1'))) {
+        if ($_GET['start'] == "true") {
+            $locked = false;
+            $_SESSION['user_array']['ditloid_lock_timestamp'] = time() + 30 * 60;
+            $sql = "UPDATE users SET ditloid_lock_timestamp = :dlocktimestamp WHERE user = :user";
+            $stmt = $link->prepare($sql);
+            $stmt->bindValue(':dlocktimestamp',$_SESSION['user_array']['ditloid_lock_timestamp'],PDO::PARAM_INT);
+            $stmt->bindValue(':user',$_SESSION['user_array']['user'], PDO::PARAM_STR);
+            $stmt->execute();
+        } else {
+            header("Location: test/start_dtest_counter.php?ttype=dtest");
+            die();
+        }
+    } else {
+        header("Location: test/start_dtest_counter.php?ttype=dtest");
+        die();
+    }
+} else {
+    if ((time() > $row['dls']) || ($row['ditloid_time_left_when_locked'] > 0)) {
+        $locked = true;
+    } else {
+        $locked = false;
+    }
+}
+
+$sql = "SELECT * FROM `vditloid_words` WHERE `lang` = :lang ORDER BY `did`, `wid`";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':lang',$_SESSION['user_array']['input_language'],PDO::PARAM_STR);
+$stmt->execute();
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $ditloids[$row['did']][$row['wid']] = $row;
+}
+$sql = "SELECT * FROM `vditloid_values` WHERE `lang` = :lang AND `user` = :user ORDER BY `did`, `wid`";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':lang',$_SESSION['user_array']['input_language'],PDO::PARAM_STR);
+$stmt->bindValue(':user',$_SESSION['user_array']['user'],PDO::PARAM_STR);
+$stmt->execute();
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $ditloids_user[$row['did']][$row['wid']] = $row;
+}
+$link = null;
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo DTEST_TITLE; ?></title>
+    
+    <script type="text/javascript">
+        
+        var bLock = false
+            , actOnBlur = true
+            , focused = false
+            , lastFocusedId = ''
+            , locked =<?php echo $locked?"true":"false"; ?>;
+        
+        function sendToServer(dwuids) {
+            
+            var xmlhttp
+                , words = ''
+                , sLock = bLock ? "true" : "false"
+                , restoreFocus;
+            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            } else {// code for IE6, IE5
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    if (xmlhttp.responseText === "<?php echo DTEST_REJECTED_REQUEST; ?>") {
+                        locked = true;
+                        document.getElementById('lockButton').disabled = 'disabled';
+                    }
+                    if (xmlhttp.responseText !== '') {
+                        restoreFocus = focused;
+                        if (restoreFocus) {
+                            actOnBlur = false;
+                        }
+                        alert(xmlhttp.responseText);
+                        if (restoreFocus) {
+                            document.getElementById(lastFocusedId + 'tde').getElementsByTagName('input')[0].focus();
+                            actOnBlur = true;
+                        }
+                    }
+                }
+            };
+
+            if (Object.prototype.toString.call( dwuids ) === '[object Array]'){
+                dwuids.forEach(function(dwuid){
+                    words += "&dwuid" + dwuid + '=' +  document.getElementById(dwuid + 'e').value;
+                });
+            }
+            
+            xmlhttp.open("POST", "test/set_result.php", true);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("bLock=" + sLock + words);
+            
+        }
+
+        function trim(str) {
+            return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+        }
+        
+        function displayEditInputs(id) {
+            var tde;
+            if (locked) {
+                alert("<?php echo DTEST_ALERT_LOCKED; ?>");
+                return false;
+            }
+            tde = document.getElementById(id + 'tde');
+            if (tde.style.display === 'none') {
+                /* enter edit mode for selected id */
+                document.getElementById(id + 'td').style.display = 'none';
+                tde.style.display = 'inline';
+                tde.getElementsByTagName('input')[0].focus();
+                return true;
+            }
+            return false;
+        }
+        
+        function saveAndHideEditInputs(did) {
+            /* leave edit mode */
+            if ((!focused) || (lastFocusedId != did)) {
+                var bSend = false, dwuids = [], elements = document.getElementById(did + 'tde').getElementsByTagName('input'), i;
+                // This will break if anything other than <input id="dwuid+'e'"> elements are 
+                // childs of document.getElementById(did + 'tde') !!!
+                for (i = 0; i< elements.length; i++){
+                    var dwuid = elements[i].id.substring(0, elements[i].id.length - 1)
+                        , nonEditableElement = document.getElementById(dwuid)
+                        , previousValue = nonEditableElement.innerHTML;
+                    dwuids.push(dwuid);
+                    elements[i].value = trim(elements[i].value);
+                    nonEditableElement.innerHTML = (elements[i].value !== '') ? elements[i].value : '.';
+                    if (previousValue !== nonEditableElement.innerHTML){
+                        bSend = true;
+                    } 
+                }
+                document.getElementById(did + 'td').style.display = 'inline';
+                document.getElementById(did + 'tde').style.display = 'none';
+                if (bSend) sendToServer(dwuids);
+            }
+        }
+        
+        function onInputFocus(id) {
+            focused = true;
+            lastFocusedId = id;
+        }
+        
+        function onInputBlur(id) {
+            focused = false;
+            if (actOnBlur) {
+                setTimeout('saveAndHideEditInputs(' + id + ')', 150);
+            }
+        }
+        
+        function blockButton() {
+            bLock = confirm("<?php echo DTEST_CONFIRM_LOCK; ?>");
+            if (bLock) {
+                locked = true;
+                document.getElementById('lockButton').disabled = 'disabled';
+                sendToServer('0');
+            }
+        }
+        
+        function stopRKey(evt) {
+            var node;
+            evt = (evt) ? evt : ((event) ? event : null);
+            node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+            if ((evt.keyCode == 13) && (node.type == "text")) {
+                onInputBlur(lastFocusedId);
+            }
+        }
+        
+        document.onkeypress = stopRKey;
+        
+    </script>
+    
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+</head>
+<body>
+<div id="wrap">
+    <div id="content">
+        <?php $page = "ditloids_test";
+        require_once dirname(__FILE__) . '/watrixbar.phtml'; ?>
+        <h1>
+            <?php echo DTEST_HEADER; ?>
+        </h1>
+
+        <h2>
+            <?php echo DTEST_HEADER_2; ?>
+        </h2>
+
+        <p><?php echo DTEST_INSTRUCTIONS; ?></p>
+
+        <p style="font-style:italic;"><?php echo DTEST_INSTRUCTIONS_2; ?></p>
+
+        <form>
+            <table style="margin: auto">
+                <?php
+                if (isset($ditloids)) {
+                    foreach ($ditloids as $did => $d) {
+                        echo "<tr>" . PHP_EOL;
+                        echo "<td id=\"" . $did . "td\" style=\"display:inline;\" onclick=\"displayEditInputs('" . $did . "');\">" . PHP_EOL;
+                        foreach ($d as $wid => $w) {
+                            echo $w['pre'];
+                            echo $w['dit'];
+                            echo "<span id=\"" . $w['dwuid'] . "\">";
+                            echo isset($ditloids_user[$did]) ? ((trim(
+                                    $ditloids_user[$did][$wid]['val']
+                                ) !== '') ? $ditloids_user[$did][$wid]['val'] : '.') : '.';
+                            echo "</span>";
+                            echo $w['post'] . PHP_EOL;
+                        }
+                        echo "</td>" . PHP_EOL;
+                        echo "<td id=\"" . $did . "tde\" style=\"display:none;\">" . PHP_EOL;
+                        foreach ($d as $wid => $w) {
+                            echo $w['pre'];
+                            echo $w['dit'];
+                            echo "<input id=\"" . $w['dwuid'] . "e\" name=\"" . $w['dwuid'] . "e\" type=\"text\" value=\"";
+                            echo isset($ditloids_user[$did]) ? (isset($ditloids_user[$did][$wid]) ? $ditloids_user[$did][$wid]['val'] : "") : "";
+                            echo "\" autocomplete=\"off\" size=\"" . strlen(
+                                    $w['val']
+                                ) . "\" onfocus=\"setTimeout('onInputFocus(\\'" . $did . "\\')',50);\" onblur=\"onInputBlur('" . $did . "');\">";
+                            echo $w['post'] . PHP_EOL;
+                        }
+                        echo "</td>" . PHP_EOL;
+                        echo "</tr>" . PHP_EOL;
+                    }
+                }
+                ?>
+            </table>
+            <br/><input id="lockButton" type="button" value="<?php echo DTEST_SAVE_BUTTON; ?>"
+                        onclick="blockButton();" <?php echo $locked ? "disabled=\"disabled\"" : ""; ?> >
+        </form>
+    </div>
+</div>
+</body>
+</html>

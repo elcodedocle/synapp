@@ -1,0 +1,27 @@
+<?php
+define('UNREG_TITLE', "SYNAPP - USUŃ UŻYTKOWNIKA ");
+define('UNREG_HEADER', "USUWANIE SYNAPP KONTA UŻYTKOWNIKA");
+define('UNREG_PASS', "Hasło");
+define('UNREG_SEND', "USUWANIE KONTA");
+define('UNREG_ERR_1', "Nieprawidłowe hasło. Spróbuj ponownie.");
+define('UNREG_ERR_2', "Zostało wysłane wiadomości e-mail z potwierdzeniem. Proszę skorzystaj z łącza na tę wiadomość e-mail, wyrejestruj.");
+define('UNREG_ERR_3', "Niewłaściwy captcha. Spróbuj ponownie.");
+define('UNREG_CAPT', "Captcha:");
+define('UNREG_CONFIRM', "Czy na pewno??? ZAMIERZASZ usunąć konto dla użytkownika:");
+define('UNREG_WARNING', "Ta operacja jest IRREVERSIBLE. WSZYSTKICH danych związanych z należy wil konta należy LOST FOREVER.");
+define('UR_MAIL_SUBJECT_1', "SYNAPP wyrejestrować żądanie użytkownika ");
+define('UR_MAIL_SUBJECT_2', ". Nie odpowiadaj.");
+define('UR_MAIL_MIMEALT', "Jeśli czytasz, prosimy zaktualizować oprogramowania firmy czytanie poczty e-mail.");
+define('UR_MAIL_TITLE', "Usuń konto SYNAPP.");
+define('UR_MAIL_TO', "Tę wiadomość e-mail została automatycznie wygenerowana i wysyłane z SYNAPP na adres");
+define('UR_MAIL_USR_1', "z powodu przyjmowania Wyrejestruj formularz żądania dla użytkownika");
+define('UR_MAIL_USR_2', "konta.");
+define('UR_MAIL_NR', "PROSZĘ NIE ODPOWIE NA TEN KOMUNIKAT.");
+define('UR_MAIL_IGNORE', "Jeśli masz żadnego związku z tego konta lub nie chcesz usunąć swoje konto należy zignorować tę wiadomość e-mail.");
+define('UR_MAIL_DO', "Aby usunąć subskrypcję i wszystkie dane związane z kontem, wykonaj to łącze, klikając na niej lub skopiowanie go do przeglądarki pasek nawigacyjny adresu url:");
+define('UR_TITLE_1', "SYNAPP konto zniszczenia formularza.");
+define('UR_HEADER_1', "Proszę napisać poniżej SYNAPP nazwę użytkownika lub adres e-mail skojarzony.<br />Otrzymasz wiadomość e-mail pod tym adresem dalsze instrukcje dotyczące sposobu usunięcia konta użytkownika.");
+define('UR_SENT_2', "Żądanie wiadomości e-mail z potwierdzeniem został wysłany do e-mail adres asociated z użytkownikiem");
+define('UR_SENT_DO', "Wykonaj instrukcje na to aby usunęła Twoje konto.");
+define('UR_SENT_TITLE_2', "Konta Usuń wysłane żądanie potwierdzenia do użytkownika");
+define('UR_GOTO_HOME', "Przejdź do strony głównej SYNAPP");

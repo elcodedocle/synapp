@@ -1,0 +1,279 @@
+<?php
+session_start();
+if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
+    header('Location: watrix.phtml');
+}
+if (isset($_SESSION['adm'])) {
+    header('Location: admin/account/admlogout.php?location=../../login.phtml');
+}
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+require_once dirname(__FILE__) . '/account/'
+    . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
+require_once dirname(__FILE__) . '/languages/get_interface_languages_list.php';
+require_once dirname(__FILE__) . '/account/process_login.php';
+require_once dirname(__FILE__) . '/languages/get_browser_language.php';
+if (file_exists(dirname(__FILE__) . '/account/' . SYNAPP_CONFIG_DIRNAME . '/crypt_constants.php')) {
+    require_once dirname(__FILE__) . '/account/' . SYNAPP_CONFIG_DIRNAME . '/crypt_constants.php';
+}
+require_once dirname(__FILE__) . '/gpg/decrypt_gpg.php';
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+if (!isset($_SESSION['if_lang'])) {
+    $lang = getDefaultLanguage();
+    if (stripos($lang, "es") === 0) {
+        $_SESSION['if_lang'] = "spa";
+    } elseif (stripos($lang, "pl") === 0) {
+        $_SESSION['if_lang'] = "pol";
+    } else {
+        $_SESSION['if_lang'] = "eng";
+    }
+}
+if (isset($_POST['whoami'])) {
+    if ($_POST['whoami'] === "if_lang_form") {
+        $_SESSION['if_lang'] = $_POST['if_lang'];
+    }
+}
+$langfile = 'logintxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . '/selectors/option_list.php';
+if (count($_POST)) {
+    if ($_POST['whoami'] === "login_form" || $_POST['whoami'] === ANDROID_ID) {
+        $salt = ($_POST['whoami'] === "4ndr0id") ? ANDROID_SALT : $_SESSION['salt'];
+        $link = connect();
+        $dpass = decrypt_gpg($_POST['codedpass'], $salt);
+        if (process_login($_POST['user'], decrypt_gpg($_POST['codedpass'], $salt), $link)) {
+            $link = null;
+            header('Location: ' . $_POST['location']);
+            exit;
+        } else {
+            $link = null;
+        }
+    }
+} else {
+    require_once dirname(__FILE__) . '/account/process_facebook_login.php';
+    $link = connect();
+    if (($facebookLoginUrl = process_facebook_login($link)) === true) {
+        $link = null;
+        header('Location: ' . (isset($_GET['location']) ? $_GET['location'] : 'watrix.phtml'));
+        exit;
+    } else {
+        $link = null;
+    }
+}
+if (!isset($_SESSION['interface_languages'])) {
+    if (!isset($link)) {
+        $link = connect();
+    }
+    $_SESSION['interface_languages'] = get_interface_languages_list($link);
+}
+$ill = option_list($_SESSION['interface_languages'], $_SESSION['if_lang']);
+if (!isset($_SESSION['user_count'])) {
+    $_SESSION['user_count'] = 1;
+}
+if (!isset($_SESSION['pass_count'])) {
+    $_SESSION['pass_count'] = 0;
+}
+$_SESSION['salt'] = mt_rand();
+
+
+if (defined('CRYPT_BYPASS') && (CRYPT_BYPASS === true || strtolower(CRYPT_BYPASS) === "1" || strtolower(
+            CRYPT_BYPASS
+        ) === "true" || strtolower(CRYPT_BYPASS) === "on")
+) {
+    $crypt_bypass = true;
+} else {
+    $crypt_bypass = false;
+}
+
+if (!function_exists("gnupg_init") || !function_exists("gnupg_adddecryptkey") || !function_exists("gnupg_decrypt")) {
+    error_log("Required GnuPG functions not available. Bypassing password RSA encryption...");
+    $crypt_bypass = true;
+} else {
+    if (!$crypt_bypass && !defined('SYNAPP_GPG_KEY_FINGERPRINT') || !defined('PUBLIC_GPG_KEY_ID') || !defined(
+            'PUBLIC_GPG_KEY'
+        )
+    ) {
+        error_log("Missing required PGencode/GnuPG encoding/decoding parameters. Bypassing password RSA encryption...");
+        $crypt_bypass = true;
+    }
+}
+
+
+?><!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title><?php echo LOGIN_TITLE ?></title>
+    <script type="text/javascript" src=".<?php echo SYNAPP_OPENPGPJS_PATH; ?>/openpgp.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+    <script type="text/javascript">
+        function stopRKey(evt) {
+            var node;
+            evt = (evt) ? evt : ((event) ? event : null);
+            node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+            if ((evt.keyCode == 13) && (node.type == "text" || node.type == "password")
+                && (document.getElementById("password").value !== '')) {
+                document.getElementById("dabutton").onclick();
+            }
+        }
+        document.onkeypress = stopRKey;
+    </script>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        img {
+            max-width: 100%;
+        }
+
+        #content {
+            border: 1px solid #000;
+            width: 500px;
+            padding: 0 0 15px 0;
+            position: relative;
+            text-align: center;
+            left: -50%;
+        }
+    </style>
+    <!--[if IE 7]>
+    <style type="text/css">
+        #wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+</head>
+<body onload="document.getElementById('user').focus();">
+<div id="wrapper">
+    <div id="outer">
+        <div id="wrap">
+            <div id="content">
+                <form enctype="multipart/form-data" method="post">
+                    <div style="text-align:right;">
+                        <input type="hidden" name="whoami" value="if_lang_form"/>
+                        <select name="if_lang" onchange="this.form.submit()">
+                            <?php for ($i = 0; $i < count($ill); $i++) {
+                                echo $ill[$i];
+} ?>
+                        </select>
+                    </div>
+                </form>
+                <h1 style="margin:0;"><?php echo LOGIN_HEADER; ?></h1>
+
+                <h2 style="margin:5px;"><span style="color:#888888;font-style:italic;"><?php echo LOGIN_MOTO; ?></span>
+                </h2>
+
+                <form enctype="multipart/form-data" method="post" id="login_form">
+                    <div>
+                        <input type="hidden" name="whoami" value="login_form"/>
+                        <input type="hidden" name="location" value="<?php
+                        $location = isset($_GET) ? (isset($_GET['location']) ? urldecode(
+                            $_GET['location']
+                        ) : "watrix.phtml") : "watrix.phtml";
+                        echo $location;
+                        ?>"/>
+                        <table style="margin:auto">
+                            <tr>
+                                <td style="text-align:right;">
+                                    <?php echo LOGIN_USR ?></td>
+                                <td><input type="text" id="user" name="user"<?php
+                                    if (isset($_POST['user'])) {
+                                        echo " VALUE=\"" . $_POST['user'] . "\"";
+                                    }
+                                    ?> /></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:right;"><?php echo LOGIN_PASS; ?></td>
+                                <td><input type="password" id="password" name="pass"/></td>
+                                <td></td>
+                            </tr>
+                            <?php
+                            if (($_SESSION['user_count'] > 6) || ($_SESSION['pass_count'] > 9)) {
+                                echo "<tr><td></td><td><div style=\"width:140px;float:left;\"><span id=\"captchaImage\"><img src=\"." . SYNAPP_CAPTCHA_PATH . "/captcha.image.php?nocache="
+                                    . hash('sha256', time() . mt_rand()) . "\" border=\"0\" /></span></div></td><td><a 
+. href=\"#\" onclick=\"updateCaptcha(null, '." . SYNAPP_CAPTCHA_PATH ."' );return false;\"><img src=\".". SYNAPP_UI_RESOURCES_PATH ."/images/refresh.png\" border=\"0\" alt=\""
+                                    . LOGIN_REFRESH . "\" title=\"" . LOGIN_REFRESH . "\"/></a></td></tr>";
+                                echo "<tr><td align=\"right\">" . LOGIN_CAPT . "</div></td><td><input name=\"magicword\" type=\"text\" /></td><td></td></tr>";
+                            }
+                            ?>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td style="text-align:right;"><input type="button" value="<?php
+                                    echo LOGIN_SEND; ?>" onclick="<?php
+                                    if ($crypt_bypass) {
+                                        echo "document.getElementById('login_form').codedpass.value=document.getElementById('login_form').password.value;document.getElementById('login_form').submit();";
+                                    } else {
+                                        echo "encrypt(0,'" . PUBLIC_GPG_KEY_ID . "','" . PUBLIC_GPG_KEY . "','" . $_SESSION['salt'] . "');";
+                                    }
+                                    ?>" id="dabutton"/></td>
+                                <td></td>
+                            </tr>
+                        </table>
+                        <textarea style="display: none" id="codedpass" name="codedpass"></textarea>
+                    </div>
+                </form>
+                <?php
+                    if (isset($_SESSION['login_err'])){
+                        if($_SESSION['login_err'] == 1) {
+                            echo "<span style=color:red>" . LOGIN_ERR_1 . "<br /><br />";
+                            $_SESSION['login_err'] = 0;
+                        } else if ($_SESSION['login_err'] == 2) {
+                            echo "<span style=color:red>" . LOGIN_ERR_2 . "<br /><br />";
+                            $_SESSION['login_err'] = 0;
+                        } else if ($_SESSION['login_err'] == 3) {
+                            echo "<span style=color:red>" . LOGIN_ERR_3 . "<br /><br />";
+                            $_SESSION['login_err'] = 0;
+                        } else if ($_SESSION['login_err'] == 403) {
+                            echo "<span style=color:red>" . LOGIN_ERR_403 . "<br /><br />";
+                            $_SESSION['login_err'] = 0;
+                        }
+                    }
+                ?>
+                <div style="display:table;margin:auto;vertical-align:middle">
+                    <div style="display:table-row;vertical-align:middle">
+                        <div style="display:table-cell;vertical-align:middle;text-align:center;margin:auto"><a
+                                style="display: inline-block;height: 32px;vertical-align: middle;"
+                                href="register.phtml"><?php
+                                echo LOGIN_REG?></a><span
+                                style="display: inline-block;height: 32px;vertical-align: middle;">&nbsp;-&nbsp;</span><a
+                                style="display: inline-block;height: 32px;vertical-align: middle;"
+                                href="restore_account_request.phtml"><?php
+                                echo LOGIN_RECOVER?></a><span
+                                style="display: inline-block;height: 32px;vertical-align: middle;">&nbsp;-&nbsp;</span><a
+                                style="height: 32px;" href="<?php
+                            echo isset($facebookLoginUrl) && is_string(
+                                $facebookLoginUrl
+                            ) ? htmlspecialchars($facebookLoginUrl) : ''?>"><img src=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/images/fl.png" style="width:32px;height:32px" alt="<?php
+                                echo LOGIN_WITH_FB?>" title="<?php
+                                echo LOGIN_WITH_FB?>"/></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html> 

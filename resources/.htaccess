@@ -1,0 +1,5 @@
+# Prevents Apache from serving files on this folder. This folder should not be 
+# public and it is not required at all for running the application. It only 
+# contains some installation, mainteinance, set-up and configuration resources
+# and scripts.
+deny from all

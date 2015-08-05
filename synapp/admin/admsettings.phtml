@@ -1,0 +1,159 @@
+<?php
+session_start();
+if ( !isset($_SESSION['adm']) || $_SESSION['adm'] !== true ) {
+    header("Location: admlogin.phtml?location=admsettings.phtml");
+    die();
+}
+require_once dirname(__FILE__) . '/../account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/../connect.php';
+require_once dirname(__FILE__) . '/../languages/get_interface_languages_list.php';
+require_once dirname(__FILE__) . '/../languages/get_browser_language.php';
+require_once dirname(__FILE__) . '/account/change_admin_language.php';
+require_once dirname(__FILE__) . '/account/change_admin_email.php';
+require_once dirname(__FILE__) . '/account/change_admin_password.php';
+if (count($_POST)){
+    $link = connect();
+    if (isset($_POST['if_lang']) && $_POST['if_lang']!==$_SESSION['adm_array']['lang']) {
+        if ($result = change_admin_language($_SESSION['adm_array']['user'], $_POST['if_lang'], $link)){
+            $_SESSION['if_lang'] = $_POST['if_lang'];
+            $_SESSION['adm_array']['lang'] = $_POST['if_lang'];
+        }
+    }
+    if (isset($_POST['email']) && $_POST['email']!==$_SESSION['adm_array']['email']) {
+        $result = change_admin_email($_SESSION['adm_array']['user'], $_POST['email'], $link);
+        $_SESSION['adm_array']['email'] = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+    }
+    if (isset($_POST['password']) && strlen($_POST['password'])>0) {
+        if ($_POST['password'] === $_POST['password2']){
+            $result = change_admin_password($_SESSION['adm_array']['user'], $_POST['oldpassword'], $_POST['password'], $link);
+        } else {
+            $result['err'] = true;
+            $result['errCod'] = 'PASS_ERR';
+            $result['errMess'] = ADMSET_PASSWORDS_DO_NOT_MATCH;
+        }
+    }
+    $link = null;
+}
+if (!isset($_SESSION['if_lang'])) {
+    $lang = getDefaultLanguage();
+    if (stripos($lang, "es") === 0) {
+        $_SESSION['if_lang'] = "spa";
+    } elseif (stripos($lang, "pl") === 0) {
+        $_SESSION['if_lang'] = "pol";
+    } else {
+        $_SESSION['if_lang'] = "eng";
+    }
+}
+$langfile = 'admsettingstxt.php';
+if (file_exists(dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/admin/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/admin/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/../languages/eng/admin/' . $langfile;
+}
+require_once dirname(__FILE__) . '/../selectors/option_list.php';
+    
+    
+if (!isset($_SESSION['interface_languages'])) {
+    if (!isset($link)) {
+        $link = connect();
+    }
+    $_SESSION['interface_languages'] = get_interface_languages_list($link);
+}
+$ill = option_list($_SESSION['interface_languages'], $_SESSION['if_lang']);
+    
+    
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo ADMSET_TITLE; ?></title>
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link href="..<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src="..<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+</head>
+<body>
+<div class="container" style="max-width: 500px;">
+    <div class="row">
+        <?php $page = "admsettings"; $contextPath="../";
+        require_once dirname(__FILE__) . '/../watrixbar.phtml'; ?>
+    </div>
+<div class="row">
+<div class="span12">
+    <form class="form-horizontal" enctype="multipart/form-data" method="post">
+        <fieldset>
+                
+            <!-- Form Name -->
+            <legend><?php echo ADMSET_HEADER; ?></legend>
+            
+            <!-- Select Basic -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="if_lang"><?php echo ADMSET_LANGUAGE; ?></label>
+                <div class="col-md-6">
+                    <select id="if_lang" name="if_lang" class="form-control">
+                        <?php for ($i = 0; $i < count($ill); $i++) {
+                            echo $ill[$i];
+                        } ?>
+                    </select>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="email"><?php echo ADMSET_EMAIL; ?></label>  
+                <div class="col-md-6">
+                    <input id="email" name="email" type="text" placeholder="<?php echo ADMSET_EMAIL_EXAMPLE; ?>" <?php echo isset($_SESSION['adm_array'])?"value='{$_SESSION['adm_array']['email']}'":'' ?> class="form-control input-md">
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            
+            <!-- Password input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="oldpassword"><?php echo ADMSET_CURRENT_PASSWORD; ?></label>
+                <div class="col-md-6">
+                    <input id="oldpassword" name="oldpassword" type="password" placeholder="<?php echo ADMSET_CURRENT_PASSWORD; ?>" class="form-control input-md">
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            
+            <!-- Password input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="password"><?php echo ADMSET_NEW_PASSWORD; ?></label>
+                <div class="col-md-6">
+                    <input id="password" name="password" type="password" placeholder="<?php echo ADMSET_NEW_PASSWORD; ?>" class="form-control input-md">
+                    <span class="help-block"><?php echo ADMSET_PASSWORD_MINSIZE; ?></span>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            
+            <!-- Password input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="password2"><?php echo ADMSET_PASSWORD_REPEAT; ?></label>
+                <div class="col-md-6">
+                    <input id="password2" name="password2" type="password" placeholder="<?php echo ADMSET_NEW_PASSWORD; ?>" class="form-control input-md">
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="send"></label>
+                <div class="col-md-6">
+                    <button id="send" name="send" class="btn btn-primary"><?php echo ADMSET_SAVE; ?></button>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            
+            <div class="form-group success">
+                <?php if (isset($result['errCod'])&&$result['errCod']==='USER_ERR'):?><span class="help-block"><?php echo ADMLOGIN_USERNAME_ERR; ?></span><?php endif; ?>
+            </div>
+                
+        </fieldset>
+    </form>
+</div>
+</div>
+</div>
+</body>
+</html>

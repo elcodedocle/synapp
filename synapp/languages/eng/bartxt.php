@@ -1,0 +1,21 @@
+<?php
+define('BAR_FAQ', "Help!");
+define('BAR_TESTS', "Tests");
+define('BAR_WEQ', "Word Equations");
+define('BAR_ALTUSES', "Alternative Uses");
+define('BAR_COMMPROP', "Common Property");
+define('BAR_TAKE', "Take");
+define('BAR_EVALUATE', "Evaluate");
+define('BAR_RESULTS', "Results");
+define('BAR_ASSOCIATIONS', "Associations");
+define('BAR_SYNAPP', "Simultaneous");
+define('BAR_SYNAPP_FLASH', "Sequential");
+define('BAR_STATS', "Stats");
+define('BAR_MYACCOUNT', "My account");
+define('BAR_PROFILE', "Profile/Settings");
+define('BAR_LOGOUT', "Logout");
+define('BAR_CONTACT', "Contact");
+define('BAR_RESOURCES', "Resources");
+define('BAR_USERSANDDATA', "Users & Data");
+define('BAR_SETTINGS', "Settings");
+define('BAR_ADMFAQ', "FAQ");

@@ -1,0 +1,113 @@
+var allchoices = [];
+var tochoice = [];
+var toneedle = [];
+var choice = [];
+
+function createList(field,firstFieldFromNeedle) {
+    
+//dinamically narrow the number of elements on the 'allchoices' list to those matching the input of a 'needle' text field
+        
+    var ilist = document.getElementById(field), needle, selectedNode, re, i, newilistElement;
+    
+    if (!(field in allchoices)) {allchoices[field]=null;}
+    if (allchoices[field]==null){
+        //'allchoices' list is given by the server as the default 'choice' list.
+        allchoices[field] = ilist.cloneNode(true);
+    }
+    needle = document.getElementById(field+"Needle");
+    selectedNode = null;
+    re = new RegExp("^"+needle.value, "i");
+
+    while (ilist.hasChildNodes()){
+        if (ilist.firstChild.selected==true){
+            selectedNode = ilist.firstChild.cloneNode(true);
+        }
+        ilist.removeChild(ilist.firstChild);
+    }
+
+    for(i = 0; i < allchoices[field].length; i++){
+        if ((allchoices[field][i].innerHTML.match(re))||needle.value=="") {
+            newilistElement = allchoices[field][i].cloneNode(true);
+            ilist.appendChild(newilistElement);
+        }
+    }
+    
+    if (firstFieldFromNeedle){
+        newilistElement = document.createElement('option');
+        newilistElement.setAttribute('value', needle.value);
+        newilistElement.appendChild(document.createTextNode(needle.value));
+        ilist.appendChild(newilistElement);
+    }
+    if (ilist.length==1) ilist[0].selected=true;
+    
+    if (selectedNode!=null){
+        for (i=0; i < ilist.length; i++) {
+            if(ilist[i].value == selectedNode){
+                ilist[i].selected = true;
+            }
+        }
+    }
+    
+    if (needle.value!="") {expand(field);} else {document.getElementById(field).style.display='none';}
+        
+}
+function updatechoice(field,focused){
+    toneedle[field]=true;
+    tochoice[field]=true;
+    if ((!focused)&&(document.getElementById(field).style.display!='none')){
+        document.getElementById(field+"Needle").value=document.getElementById(field)[document.getElementById(field).selectedIndex].innerHTML;
+        document.getElementById(field).style.display='none';
+        if (document.getElementById(field+"Table").style.display!="none") switchallchoicestable(field+"Table");
+    }
+}
+function expand(field){
+    var lsize=Math.max(1,Math.min(document.getElementById(field).length,10));
+    if (document.getElementById(field).getAttribute('size')!=lsize){
+        document.getElementById(field).setAttribute('size',lsize.toString());
+    }
+    if ((document.getElementById(field).style.display=='none')){
+        document.getElementById(field).style.display='inline';
+    }
+}
+function switchtoneedle(field){
+    toneedle[field]=true;
+    choice[field]=document.getElementById(field).value;
+    document.getElementById(field+"Needle").setAttribute('autocomplete', 'off');
+    if (document.getElementById(field+'Needle').value!="") {expand(field);} 
+}
+function switchfromneedle(field){
+    tochoice[field]=false;
+    setTimeout("updatechoice('"+field+"',tochoice['"+field+"'])",100);
+}
+function switchtochoice(field){
+    tochoice[field]=true;
+}
+function switchfromchoice(field){
+    toneedle[field]=false;
+    setTimeout("updatechoice('"+field+"',toneedle['"+field+"'])",100);
+}
+function switchallchoicestable(table){
+    if (document.getElementById(table).style.display!="none"){
+        document.getElementById(table).style.display="none";
+        document.getElementById(table+"Show").style.display='inline';
+        document.getElementById(table+"Hide").style.display='none';
+    } else {
+        document.getElementById(table).style.display="inline";
+        document.getElementById(table+"Show").style.display='none';
+        document.getElementById(table+"Hide").style.display='inline';
+    }
+}
+function setchoicebylink(field,value){
+    document.getElementById(field).value = value;
+    document.getElementById(field+"Needle").value = document.getElementById(value).innerHTML;
+    document.getElementById(field).style.display = 'none';
+    switchallchoicestable(field + 'Table');
+}
+function stopRKey(evt) {
+  var node;
+  evt = (evt) ? evt : ((event) ? event : null);
+  node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+  return !((evt.keyCode == 13) && (node.type == "text")); 
+}
+
+document.onkeypress = stopRKey; 

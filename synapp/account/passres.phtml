@@ -1,0 +1,218 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/../connect.php';
+require_once dirname(__FILE__) . '/parsers.php';
+require_once dirname(__FILE__) . '/..' . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+require_once dirname(__FILE__) . '/../selectors/option_list.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+if (isset($_POST['whoami'])) {
+    if ($_POST['whoami'] === "if_lang_form") {
+        $_SESSION['if_lang'] = $_POST['if_lang'];
+    }
+}
+$langfile = 'passrestxt.php';
+if (file_exists(dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/../languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . '/../languages/get_interface_languages_list.php';
+require_once dirname(__FILE__) . '/change_password.php';
+
+if (!count($_POST) || !isset($_SESSION['interface_languages'])) {
+
+    if (!isset($link)) {
+        $link = connect();
+    }
+    $_SESSION['interface_languages'] = get_interface_languages_list($link);
+    $link = null;
+
+}
+$interface_lang_options = option_list($_SESSION['interface_languages'], $_SESSION['if_lang']);
+
+$user = "";
+$code = "";
+$pass = "";
+$pass2 = "";
+$passwordparseerr = false;
+$passwordmatcherr = false;
+$passwordusermatcherr = false;
+$captchaerr = false;
+$error = -1;
+
+if ((!count($_POST)) && (count($_GET))) {
+    $user = $_GET['user'];
+    $code = $_GET['code'];
+    $link = connect();
+    $sql = "SELECT recovery, interface_language FROM users WHERE user = :user";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user', $user, PDO::PARAM_STR);
+    $stmt->execute();
+    $link = null;
+    if ($ua = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        if (!(hash("sha256", $code) === $ua['recovery'])) {
+            $link = connect();
+            $sql = "UPDATE users SET recovery = :recovery WHERE user = :user";
+            $stmt = $link->prepare($sql);
+            $stmt->bindValue(':recovery', hash("sha256", mt_rand()), PDO::PARAM_STR);
+            $stmt->bindValue(':user', $user, PDO::PARAM_STR);
+            $stmt->execute();
+            $link = null;
+            die ("Error: Invalid request (1).");
+        } else {
+            $_SESSION['if_lang'] = $ua['interface_language'];
+        }
+    } else {
+        die ("Error: Invalid request (1).");
+    }
+} else {
+    if (!count($_POST)) {
+        die ("Error: No data.");
+    } else {
+        $user = $_POST['user'];
+        $code = $_POST['code'];
+        if ($_POST['whoami'] == "passres_form") {
+            $pass = $_POST['pass'];
+            $pass2 = $_POST['pass2'];
+            if (captcha_verify_word()) {
+                if ($pass != $user) {
+                    if ($pass === $pass2) {
+                        if (($error = parse($pass, 10, 64)) == 0) {
+                            change_password($code, $user, $pass);
+                            exit;
+                        } else {
+                            $passwordparseerr = true;
+                        }
+                    } else {
+                        $passwordmatcherr = true;
+                    }
+                } else {
+                    $passwordusermatcherr = true;
+                }
+            } else {
+                $captchaerr = true;
+            }
+        }
+    }
+}
+?><!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title><?php echo PR_TITLE_2 . " " . $user; ?></title>
+    <link href="..<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        #content {
+            border: 1px solid #000;
+            padding: 0 0 0 0;
+            position: relative;
+            text-align: center;
+            left: -50%;
+        }
+    </style>
+    <!--[if IE 7]>
+    <style type="text/css">
+        #wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+    <script type="text/javascript" src="..<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+</head>
+<body>
+<div id="wrapper">
+    <div id="outer">
+        <div id="wrap">
+            <div id="content">
+                <div style="text-align:right;">
+                    <form enctype="multipart/form-data" method="POST">
+                        <input type="hidden" name="whoami" value="if_lang_form">
+                        <input type="hidden" name="code" value="<?php echo $code ?>">
+                        <input type="hidden" name="user" value="<?php echo $user ?>">
+                        <select name="if_lang" onchange="this.form.submit()">
+                            <?php foreach ($interface_lang_options as $option) {
+                                echo $option;
+                            } ?>
+                        </select>
+                    </form>
+                </div>
+                <div style="margin:20px;">
+                    <h1><?php echo PR_HEADER_2 . " " . $user; ?></h1>
+
+                    <form method="POST">
+                        <input type="hidden" name="whoami" value="passres_form">
+                        <input type="hidden" name="code" value="<?php echo $code ?>">
+                        <input type="hidden" name="user" value="<?php echo $user ?>">
+                        <table style="margin:auto;">
+                            <tr>
+                                <td style='text-align:right;'><?php echo PR_PASS ?></td>
+                                <td style='text-align:left;'><input type="password" name="pass"></td>
+                            </tr>
+                            <tr>
+                                <td style='text-align:right;'><?php echo PR_REPASS ?></td>
+                                <td style='text-align:left;'><input type="password" name="pass2"></td>
+                            </tr>
+                            <?php
+                            echo "<tr><td></td><td style='text-align:left;padding-top:20px;'><span id='captchaImage'><img style='width:60%;' src='..".SYNAPP_CAPTCHA_PATH."/captcha.image.php?nocache=" . hash(
+                                    'sha256',
+                                    time() . mt_rand()
+                                ) . "' border='0' /></span><a 
+href='#' onclick=\"updateCaptcha('" . dirname(
+                                    dirname($_SERVER['PHP_SELF'])
+                                ) . "/');return false;\"><img src='..".SYNAPP_UI_RESOURCES_PATH."/images/refresh.png' border='0' alt='" . PR_REFRESH . "' title='" . PR_REFRESH . "'/></a></td></tr>";
+                            echo "<tr><td style='text-align:right;'>" . PR_CAPT . "</td>";
+                            echo "<td style='text-align:left;'><input name=\"magicword\" type=\"text\" autocomplete=\"off\"/><input type='submit' value='" . PR_SEND . "'></td></tr>";
+                            ?></table>
+                    </form>
+                    <?php
+                    echo "<p style=color:red>";
+                    if ($captchaerr) {
+                        echo PR_ERR_CAPT . "<br />";
+                    }
+                    if ($passwordusermatcherr) {
+                        echo PR_ERR_PUMATCH . "<br />";
+                    }
+                    if ($passwordmatcherr) {
+                        echo PR_ERR_PMATCH . "<br />";
+                    }
+                    switch ($error) {
+                        case 1:
+                            echo PR_ERR_EMPTY_2 . "<br />";
+                            break;
+                        case 2:
+                            echo PR_ERR_PMIN . "<br />";
+                            break;
+                        case 3:
+                            echo PR_ERR_PMAX . "<br />";
+                            break;
+                        case 4:
+                            echo PR_ERR_PFORMAT . "<br />";
+                            break;
+                    }
+                    echo "</p>";
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/utils/http_response_code.php';
+if (!isset($_SESSION['auth'])) {
+    header("Location: login.phtml?location=ditloid_evaluator.phtml");
+    die();
+}
+if ($_SESSION['auth'] !== true) {
+    header("Location: login.phtml?location=ditloid_evaluator.phtml");
+    die();
+}
+if (ord($_SESSION['user_array']['confirmed_email']) === 0) {
+    header(
+        "Location: profile.phtml?user="
+        . $_SESSION['user_array']['user'] . "&edit=email&alert=true"
+    );
+    die();
+}
+$_SESSION['justlogged'] = false;
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfiles = array('tevaltxt.php', 'devaltxt.php');
+foreach ($langfiles as $langfile) {
+    if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+        /** @noinspection PhpIncludeInspection */
+        require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+    } else {
+        /** @noinspection PhpIncludeInspection */
+        require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+    }
+}
+$link = connect();
+$sql = "SELECT IFNULL(ditloid_lock_timestamp,0) AS dls,ditloid_time_left_when_locked FROM users WHERE user=:user";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':user', $_SESSION['user_array']['user'], PDO::PARAM_STR);
+$stmt->execute();
+if (!($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
+    error_log("Couldn't fetch user data.");
+    http_response_code(500);
+    die("Internal Server Error. Guru meditation: 32423.");
+}
+if ($row['dls'] === '0') {
+    /* You have to take the test before evaluating... */
+    echo "<html>
+    <head>
+    <meta charset=\"utf-8\">
+    <title>" . TEV_ALERT_TITLE . "</title>
+    <script type='text/javascript'>
+        alert(\"" . TEV_ALERT . "\");
+        window.location='test_will_shortz_morgan_worthy_ditloid.phtml';
+    </script>
+    </head>
+    <body></body>
+    </html>";
+    die;
+}
+if (count($_POST)) {
+    $user = $_SESSION['otheruser'];
+    $lang = $_POST['lang'];
+    if (
+        !isset($_SESSION['rand_ticket']) ||
+        !((hash(
+            "sha256",
+            $_SESSION['rand_ticket'] . $_SESSION['otheruser']
+        ) === $_POST['ticket']))
+    ) {
+        die ("Bad ticket.");
+    }
+    unset($_SESSION['hashed_ticket']);
+    unset($_SESSION['rand_ticket']);
+    // get word ids for ditloid group and language
+    $sql = "SELECT 
+        dit.duid
+    FROM ditloids dit
+    WHERE dit.dgid = :dgid AND dit.lang = :lang"; 
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':dgid', $_POST['dgid'], PDO::PARAM_INT);
+    $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+    $stmt->execute();
+    // iterate over word ids and insert those existing in the request
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        if (isset($_POST['duid_vote_'.$row['duid']])) {
+            $sql = "INSTERT INTO 
+                ditloid_results (duid,user,evaluator,vote,popvoote) VALUES (:duid,:user,:evaluator,:vote,:popvote)";
+            $stmt = $link->prepare($sql);
+            $stmt->bindValue(':duid',$_POST['duid_vote_'.$row['duid']],PDO::PARAM_INT);
+            $stmt->bindValue(':duid',$_POST['duid_popvote_'.$row['duid']],PDO::PARAM_INT);
+            $stmt->execute();
+        }
+    }
+}
+$lang = $_SESSION['user_array']['input_language'];
+$sql = "SELECT 
+    DISTINCT dv.user
+FROM ditloid_values dv 
+INNER JOIN ditloid_words dw
+ON dv.dwuid = dw.dwuid
+INNER JOIN ditloids dt 
+ON dw.duid = dt.duid
+LEFT JOIN ditloid_results dr
+ON dv.user = dr.user 
+WHERE dt.lang = :inputlang -- same language
+AND dr.user IS NULL OR dr.user <> :user -- no self evaluation
+AND dr.user IS NULL OR dr.evaluator <> :user -- not previously evaluated by this user
+ORDER BY RAND() LIMIT 1";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':inputlang',$_SESSION['user_array']['input_language'],PDO::PARAM_INT);
+$stmt->bindValue(':user',$_SESSION['user_array']['user'],PDO::PARAM_STR);
+$stmt->execute();
+if (!($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
+    /* No more tests to evaluate right now... */
+    echo "<html>
+    <head>
+    <meta charset=\"utf-8\">
+    <title>" . TEV_NOMORE_TITLE . "</title>
+    <script type='text/javascript'>
+        alert(\"" . TEV_NOMORE_ALERT . "\");
+        window.location='stats.phtml';
+    </script>
+    </head>
+    <body></body>
+    </html>";
+    die;
+}
+$user = $row['user'];
+$lang = $row['input_language'];
+$_SESSION['otheruser'] = $user;
+$_SESSION['rand_ticket'] = hash("sha256", mt_rand());
+$ticket = hash("sha256", $_SESSION['rand_ticket'] . $_SESSION['otheruser']);
+$tableName = "`".str_replace("`","``","ditloids_" . $user . "_" . $lang)."`";
+$sql = "SELECT * FROM ditloid_values dv INNER JOIN ditloid_words dw ON dv.dwuid = dw.dwuid INNER JOIN ditloids dt ON dt.duid = dw.duid WHERE dv. AND  ORDER BY did ASC, wid ASC";
+$stmt = $link->query($sql);
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $ditloids_user[$row['did']][$row['wid']] = $row;
+}
+$tableName = "`".str_replace("`","``","ditloids_" . $lang)."`";
+$sql = "SELECT * FROM {$tableName} ORDER BY did ASC, wid ASC";
+$stmt = $link->query($sql);
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $ditloids[$row['did']][$row['wid']] = $row;
+}
+$link = null; // close the connection
+?>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo TTEV_TITLE; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div id="wrap">
+    <div id="content">
+        <?php $page = "ditloid_evaluator";
+        require_once dirname(__FILE__) . '/watrixbar.phtml'; ?>
+        <div style="text-align:center;padding:10px;"><h1><?php echo TTEV_HEADER; ?></h1></div>
+        <form enctype="multipart/form-data" method="post">
+            <input type="hidden" name="ticket" id="ticket" value="<?php echo $ticket; ?>"/>
+            <input name="lang" type="hidden" value="<?php echo $lang; ?>">
+            <table style="margin:auto;">
+                <tr>
+                    <td>
+                        <table class="evaltable" style="margin:auto;">
+                            <?php
+                            if (isset($ditloids)) {
+                                foreach ($ditloids as $did => $d) {
+                                    echo "<tr>" . PHP_EOL;
+                                    echo "<td id=\"" . $did . "td\">" . PHP_EOL;
+                                    foreach ($d as $wid => $w) {
+                                        echo $w['pre'];
+                                        echo $w['dit'];
+                                        echo "<span id=\"" . $did . "." . $wid . "\">";
+                                        echo isset($ditloids_user[$did]) ? ((trim(
+                                                $ditloids_user[$did][$wid]['val']
+                                            ) !== '') ? $ditloids_user[$did][$wid]['val'] : '.') : '.';
+                                        echo "</span>";
+                                        echo $w['post'] . PHP_EOL;
+                                    }
+                                    echo "</td>" . PHP_EOL;
+                                    echo "<td id=\"" . $did . "tde\">" . PHP_EOL;
+                                    echo "<table class='inner' id='inner{$did}'><tr><td><input type='radio' name='" . $did . "_1' value='orgfullvotes' />" . TEV_ORG_FULL;
+                                    echo "</td><td><input type='radio' name='" . $did . "_1' value='orghalfvotes' />" . TEV_ORG_HALF;
+                                    echo "</td><td><input type='radio' name='" . $did . "_1' value='orgzerovotes' checked='checked' />" . TEV_ORG_ZERO;
+                                    echo "</td></tr><tr><td><input type='radio' name='" . $did . "_2' value='cohfullvotes' />" . TEV_COH_FULL;
+                                    echo "</td><td><input type='radio' name='" . $did . "_2' value='cohhalfvotes' />" . TEV_COH_HALF;
+                                    echo "</td><td><input type='radio' name='" . $did . "_2' value='cohzerovotes' checked='checked' />" . TEV_COH_ZERO;
+                                    echo "</td><tr></table></td>" . PHP_EOL;
+                                    echo "</tr>" . PHP_EOL;
+                                }
+                            }
+                            ?>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: right;"><input type="submit" value="<?php echo TEV_SEND; ?>"/></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+</body>
+</html>

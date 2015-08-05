@@ -1,0 +1,68 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+$link = connect();
+$sql = "SELECT 
+    deval.*,
+    usrs.gotestbefore 
+    FROM vditloid_evaluations AS deval 
+    LEFT JOIN users
+    ON usrs.user = deval.user ORDER BY usrs.gotestbefore DESC";
+$stmt = $link->query($sql);
+
+$tr = array();
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $tr[$row['gotestbefore']][] = $row;
+}
+?>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ditloid Evaluations Table</title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<table class="statstable" style="margin:auto;text-align:center;">
+    <thead>
+    <tr>
+        <th>USER</th>
+        <th>ORIGINALITY</th>
+        <th>COHERENCE</th>
+        <th>TOTAL</th>
+        <th>WHEN</th>
+    </tr>
+    </thead>
+    <tbody>
+    <?php
+    foreach ($tr as $trj) {
+        $sum['org'] = 0;
+        $sum['coh'] = 0;
+        $count = 0;
+        foreach ($trj as $tri) {
+            $orgpoints = $tri['orgfullvotes'] + $tri['orghalfvotes'] / 2;
+            $cohpoints = $tri['cohfullvotes'] + $tri['cohhalfvotes'] / 2;
+            $totalpoints = $orgpoints + $cohpoints;
+            echo "<tr>";
+            echo "<td>" . $tri['user'] . "</td>";
+            echo "<td>" . $orgpoints . "/22</td>";
+            echo "<td>" . $cohpoints . "/22</td>";
+            echo "<td>" . $totalpoints . "/44</td>";
+            echo ($tri['gotestbefore'] == 1) ? "<td>BEFORE</td>" : "<td>AFTER</td>";
+            echo "</tr>";
+            $sum['org'] += $orgpoints;
+            $sum['coh'] += $cohpoints;
+            $count++;
+        }
+        $orgavg = round($sum['org'] / $count);
+        $cohavg = round($sum['coh'] / $count);
+        $totalavg = round(($sum['org'] + $sum['coh']) / $count);
+        echo "<tr><td><span style='font-weight:bold;'>AVERAGE</span></td><td><span style='font-weight:bold;'>" . $orgavg . "/22</span></td><td><span style='font-weight:bold;'>" . $cohavg . "/22</span></td><td><span style='font-weight:bold;'>" . $totalavg . "/44</span></td><td></td></tr>";
+    }
+    ?>
+    </tbody>
+    <tfoot>
+    </tfoot>
+</table>
+</body>
+</html>

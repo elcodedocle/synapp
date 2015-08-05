@@ -1,0 +1,108 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+if ((!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) && (!isset($_SESSION['adm']) || $_SESSION['adm'] !== true)) {
+    header(
+        "Location: login.phtml?location=" . urlencode(
+            "show_answer.phtml?user="
+            . $_GET['user'] . "&id1=" . $_GET['id1'] . "&id2=" . $_GET['id2'] . "&word=" . $_GET['word'] . "&type=" . $_GET['type']
+        )
+    );
+    die();
+}
+
+$bAdm = isset($_SESSION['adm'])?$_SESSION['adm']:false;
+$userArray = isset($_SESSION['user_array'])?$_SESSION['user_array']:$_SESSION['adm_array'];
+
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+require_once dirname(__FILE__) . '/connect.php';
+require_once dirname(__FILE__) . '/account/parsers.php';
+require_once dirname(__FILE__) . '/stats/get_test_results.php';
+$langfile = 'testresultstxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+$_GET['user'] = urldecode($_GET['user']);
+$_GET['id1'] = urldecode($_GET['id1']);
+$_GET['id2'] = urldecode($_GET['id2']);
+$_GET['word'] = urldecode($_GET['word']);
+$_GET['type'] = urldecode($_GET['type']);
+$link = connect();
+if (isset($_GET['user'])) {
+    if (parse($_GET['user']) !== 0) {
+        die("Error: Not authorized.");
+    }
+    $user = $_GET['user'];
+    if (!$bAdm && strtolower($user) !== strtolower($_SESSION['user_array']['user'])) {
+
+        // TODO: first check if the user has already passed all the tests. If he has, he is allowed to see other user's results (providing they are public). If he hasn't, an alert will pop up and he will be redirected to the tests page
+
+        die ("Function not active yet.");
+        
+    }
+    $sql = "SELECT input_language FROM users WHERE user = :user";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+    $stmt->execute();
+    if ($stmt->rowCount() < 1) {
+        die("Error: Not authorized.");
+    }
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $input_language = $row['input_language'];
+} else {
+    $user = $_SESSION['user_array']['user'];
+    $input_language = $_SESSION['user_array']['input_language'];
+}
+$stmt = get_test_results($link, $user, $input_language, null, $_GET['id1'], $_GET['type']);
+$out = "";
+if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    switch ($row['type']){
+        case 1: $typestr = TRES_SCATTERDANSWER; break;
+        case 2: $typestr = TRES_SCATTERCANSWER; break;
+        case 3: $typestr = TRES_SCATTERUANSWER; break;
+        default: $typestr = '';
+    }
+    $out .= "<table class='statstable' style='margin-left:auto;margin-right:auto;text-align:center;'>
+    <thead><tr>
+    <th>" . TRES_TTYPE . "</th>
+    <th>" . TRES_TPOINTS . "</th>
+    <th>" . TRES_TFULLVOTES . " (" . TRES_TUND . "/" . TRES_TCRE . ")</th>
+    <th>" . TRES_THALFVOTES . " (" . TRES_TUND . "/" . TRES_TCRE . ")</th>
+    <th>" . TRES_TZEROVOTES . " (" . TRES_TUND . "/" . TRES_TCRE . ")</th>
+    <th>" . TRES_TTIMEOFASSOC . "</th></tr></thead>
+    <tbody id='answersTableBody'><tr>
+    <td>" . $typestr . "</td>
+    <td>" . $row['allpointszerotenscale'] . "</td>
+    <td>" . $row['upvotes'] . "/" . $row['popupvotes'] . "</td>
+    <td>" . $row['neutralvotes'] . "/" . $row['popneutralvotes'] . "</td>
+    <td>" . $row['downvotes'] . "/" . $row['popdownvotes'] . "</td>
+    <td>" . $row['time_stamp'] . "</td>
+    </tr></table>" . PHP_EOL;
+}
+$result = $link = null;
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo TRES_ASS_TITLE; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+</head>
+<body onload="document.getElementById('answer').size=document.getElementById('answer').value.length;">
+<div id="wrap">
+    <div id="content">
+
+        <div style="padding:20px;"><label><input type="text" id="answer" disabled="disabled" size="64"
+                                          value="<?php echo $_GET['word']; ?>" /></label></div>
+        <div><?php echo $out; ?></div>
+    </div>
+</div>
+</body>
+</html>

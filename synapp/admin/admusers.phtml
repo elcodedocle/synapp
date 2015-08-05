@@ -1,0 +1,230 @@
+<?php
+session_start();
+if ( !isset($_SESSION['adm']) || $_SESSION['adm'] !== true ) {
+    header("Location: admlogin.phtml?location=admsettings.phtml");
+    die();
+}
+require_once dirname(__FILE__) . '/../account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/admusers/get_admin_users_list_fieldnames.php';
+require_once dirname(__FILE__) . '/../connect.php';
+/** @noinspection PhpIncludeInspection */
+require_once dirname(__FILE__) . "/../languages/{$_SESSION['if_lang']}/admin/admuserstxt.php";
+if(!isset ($_SESSION['admin_users_default_column_indexes'])){
+    $_SESSION['admin_users_default_column_indexes'] = get_admin_users_default_column_indexes();
+    $_SESSION['clearALUTState'] = 1;
+}
+?><!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>
+        <?php echo ADMUSERS_TITLE; ?>
+    </title>
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link href="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_DATATABLES_COLVIS_PATH; ?>/css/dataTables.colVis.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/css/bootstrap-multiselect.min.css" type="text/css" rel="stylesheet" />
+    
+    <link href="..<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    
+    <script type="text/javascript" src="..<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_PATH; ?>/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_COLVIS_PATH; ?>/js/dataTables.colVis.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/js/bootstrap-multiselect.min.js"></script>
+    <script type="text/javascript">
+        var table;
+        function getActive($el){
+            return $el.text()==='<?php echo ADMUSERS_ACTIVATE; ?>' ? 1:0;
+        }
+        function getAjaxObject($el){
+            return {
+                  url: 'admusers/set_user_active.php'
+                , data: { 
+                      user: $el.closest('tr').find('span.userNameDataValue').text()
+                    , active: getActive($el)
+                }
+            }
+        }
+        function switchLinkText($el){
+            $el.text()==='<?php echo ADMUSERS_ACTIVATE; ?>'?$el.text('<?php echo ADMUSERS_DEACTIVATE; ?>'):$el.text('<?php echo ADMUSERS_ACTIVATE; ?>');
+        }
+        $(document).ready(function(){
+            $('#usersListContainer').html( '<table class="table table-striped table-bordered" id="usersList" width="100%"></table>' );
+            $.ajax({
+                url: 'admusers/get_users_dataset.php',
+                dataType: 'json'
+            }).done(function(data){
+                var $DivDttt, $row, tt, $groupsSelector;
+
+                data.language = <?php $kk = file_get_contents(dirname(__FILE__)."/../languages/{$_SESSION['if_lang']}/admin/dt.json"); echo $kk; ?>;
+                data.stateSave = true;
+                data.stateDuration = 0;
+
+                for (var i=0;i<data.data.length;i++){
+
+                    var actdeact = data.data[i][0] === '0' ? '<?php echo ADMUSERS_ACTIVATE; ?>' : '<?php echo ADMUSERS_DEACTIVATE; ?>';
+
+                    // FIXME: magic number 11
+                    data.data[i][11] =
+                        '<a href="#" onclick="$.ajax(getAjaxObject($(this))).done(switchLinkText($(this)));return false;">' +
+                        actdeact +
+                        '</a>'
+                    ;
+
+                    // FIXME: magic number 0
+                    data.data[i][0] =
+                        '<a target="_blank" href="../profile.phtml?user=' + data.data[i][0] + '">' +
+                        data.data[i][0] +
+                        '</a>' +
+                        ' (<a href="../stats.phtml?user=' + data.data[i][0] + '">' +
+                        'asociaciones' +
+                        '</a>' +
+                        ' / <a href="../test_results.phtml?user=' + data.data[i][0] + '">' +
+                        'test' +
+                        '</a>)' + '<span style="display:none" class="userNameDataValue">' + data.data[i][0] + '</span>'
+                    ;
+
+                }
+                
+                table = $('#usersList').DataTable(
+                    data
+                );
+                
+                <?php if (isset($_SESSION['clearALUTState']) && $_SESSION['clearALUTState'] === 1):?>
+                table.state.clear();
+                window.location.reload();
+                <?php $_SESSION['clearALUTState'] = 2; else: ?>
+                
+                tt = new $.fn.dataTable.TableTools( table, {"sSwfPath": "..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/../swf/copy_csv_xls_pdf.swf","aButtons": [
+                    {
+                        "sExtends":     "copy",
+                        "sButtonText": "<?php echo ADMUSERS_COPY; ?>"
+                    },
+                    {
+                        "sExtends":     "csv",
+                        "sButtonText": "<?php echo ADMUSERS_CSV; ?>"
+                    },
+                    {
+                        "sExtends":     "xls",
+                        "sButtonText": "<?php echo ADMUSERS_EXCEL; ?>"
+                    },
+                    {
+                        "sExtends":     "pdf",
+                        "sButtonText": "<?php echo ADMUSERS_PDF; ?>"
+                    },
+                    {
+                        "sExtends":     "print",
+                        "sButtonText": "<?php echo ADMUSERS_PRINT; ?>"
+                    }
+                ]} );
+
+                $( tt.fnContainer() ).insertBefore('div.dataTables_wrapper');
+                
+                new $.fn.dataTable.ColReorder( table );
+
+                <?php if (isset($_SESSION['clearALUTState']) && $_SESSION['clearALUTState'] === 2):?>
+                var fieldNames = $('#fieldNames').val();
+                table.columns().every( function() {
+                    this.visible( $.inArray(this.index().toString(), fieldNames) !== -1 );
+                });
+                <?php 
+                    $_SESSION['clearALUTState'] = false;
+                    endif; 
+                ?>
+
+                var colvis = new $.fn.dataTable.ColVis( table, {buttonText:'<?php echo ADMUSERS_SHOWHIDECOLUMNS; ?>', stateChange: function(){$('table.dataTable th').css('vertical-align', 'top');}} );
+
+                $( colvis.button() ).insertAfter('form.tablePre');
+
+                $DivDttt = $('div.DTTT');
+                $DivDttt.css('margin-bottom', '0.5em');
+                $DivDttt.css('float', 'right');
+                $('div.dataTables_wrapper').css('clear', 'both');
+                $('table.dataTable th').css('vertical-align', 'top');
+                $row = $('#usersList_wrapper').find('.row').eq(1);
+                $row.css('width', '100%');
+                $row.css('overflow-x', 'auto');
+                $row.css('margin', 'auto');
+
+                table.columns( '.select-filter' ).every( function () {
+                    var that = this;
+
+                    // Create the select list and search operation
+                    var select = $('<select id="groupsSelector" multiple="multiple" ></select>')
+                        .appendTo(
+                            '#groupsFilter'
+                        )
+                        .on( 'change', function () {
+                            that
+                                .search( $(this).val()!==null?'(('+$(this).val().join(')|(')+'))':'', true )
+                                .draw();
+                        } );
+                    // Get the search data for the first column and add to the select list
+                    this
+                        .cache( 'search' )
+                        .sort()
+                        .unique()
+                        .each( function ( d ) {
+                            select.append( $('<option value="'+d+'" selected="selected">'+d+'</option>') );
+                        } );
+                } );
+                $groupsSelector = $('#groupsSelector');
+                $groupsSelector.multiselect({maxHeight: 400, includeSelectAllOption: true, selectAllText:'<?php echo ADMUSERS_SELECTALLTEXTM; ?>', nSelectedText: '<?php echo ADMUSERS_SELECTEDTEXTM; ?>', nonSelectedText: '<?php echo ADMUSERS_NONSELECTEDTEXTM; ?>', allSelectedText: '<?php echo ADMUSERS_ALLSELECTEDTEXTM; ?>'});
+                $groupsSelector.multiselect('selectAll', true);
+                $groupsSelector.multiselect('updateButtonText');
+                
+                table.columns.adjust();
+                <?php endif; ?>
+            });
+        });
+    </script>
+    <style>
+        div.ColVis{ float: none !important; }
+        ul.ColVis_collection { 
+            width: auto !important;
+            overflow-y: scroll;
+            max-height: 500px;
+        }
+        .center{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="row">
+        <?php $page = "admusers"; $contextPath="../";
+        require_once dirname(__FILE__) . '/../watrixbar.phtml'; ?>
+    </div>
+
+    <h1 class="usersListInfo"><?php echo ADMUSERS_USERS_LIST; ?></h1>
+    
+    <form class="tablePre" style="margin-bottom:1em">
+        <label id="groupsFilter">
+            <?php echo ADMUSERS_SELECT_GROUPS_TO_SHOW; ?>
+        </label>
+        <div style="display:none">
+        <label for="fieldNames"><?php echo ADMUSERS_SELECT_FIELDS_TO_SHOW; ?></label>
+        <select name="fieldNames" id="fieldNames" multiple="multiple">
+            <?php
+                $options = get_admin_users_list_fieldname_options($_SESSION['admin_users_default_column_indexes']); foreach ($options as $option) { echo $option; } 
+            ?>
+        </select>
+        </div>
+    </form>
+    <div style="font-size:x-small;width:100%;margin:auto" id="usersListContainer"></div>
+
+</div>
+
+
+</body>
+
+</html>

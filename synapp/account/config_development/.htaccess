@@ -1,0 +1,5 @@
+# Prevents Apache from serving files on this folder as a safeguard against 
+# accidental Apache PHP module misconfiguration, which could lead to 
+# serving them as static resources, which could lead to revealing synapp 
+# facebook app API credentials and synapp database access credentials.
+deny from all

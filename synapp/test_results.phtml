@@ -1,0 +1,574 @@
+<?php
+/**
+ * @param \PDO $link
+ * @param string $user
+ * @param string $input_language
+ * @return array|null
+ */
+function get_allscatter($link, $user, $input_language)
+{
+
+    $stmt = get_test_results($link, $user, $input_language, "type, id");
+
+    if ($stmt === null || $stmt->rowCount() <= 0) {
+
+        return null;
+
+    }
+
+    $i[0] = 0;
+    $i[1] = 0;
+    $i[2] = 0;
+
+    $scatter = array();
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+        if (!isset($scatter[$row['type'] - 1])) {
+
+            $scatter[$row['type'] - 1] = array(
+                'dots' => '',
+                'data' => array(),
+            );
+
+        }
+
+        $scatter[$row['type'] - 1]['dots'] .= "[" . $row['orgpointszerotenscale'] . "," . $row['intpointszerotenscale'] . "],";
+        $scatter[$row['type'] - 1]['data'][$row['type'] - 1][$i[$row['type'] - 1]]['id1'] = $row['id'];
+        $scatter[$row['type'] - 1]['data'][$row['type'] - 1][$i[$row['type'] - 1]]['id2'] = "";
+        $scatter[$row['type'] - 1]['data'][$row['type'] - 1][$i[$row['type'] - 1]]['word'] = $row['word'];
+        $scatter[$row['type'] - 1]['data'][$row['type'] - 1][$i[$row['type'] - 1]]['type'] = $row['type'];
+
+        $i[$row['type'] - 1]++;
+
+    }
+
+    for ($i = 0; $i < 3; $i++) {
+
+        if (isset($scatter[$i]['dots'])) {
+
+            $scatter[$i]['dots'] = "[" . rtrim($scatter[$i]['dots'], ',') . "]";
+
+        }
+
+    }
+
+    return $scatter;
+
+}
+
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/utils/http_response_code.php';
+
+if ((!isset($_SESSION['auth']) || $_SESSION['auth'] !== true ) && (!isset($_SESSION['adm']) && $_SESSION['adm'] !== true)) {
+
+    header("Location: login.phtml?location=test_results.phtml");
+    die();
+
+}
+$bAdm = isset($_SESSION['adm'])?$_SESSION['adm']:false;
+$userArray = isset($_SESSION['user_array'])?$_SESSION['user_array']:$_SESSION['adm_array'];
+if (!$bAdm && ord($_SESSION['user_array']['confirmed_email']) === 0) {
+
+    header("Location: profile.phtml?user=" . $_SESSION['user_array']['user'] . "&edit=email&alert=true");
+    die();
+
+}
+
+$_SESSION['justlogged'] = false;
+
+require_once dirname(__FILE__) . '/connect.php';
+
+if (!isset($_SESSION['if_lang'])) {
+
+    $_SESSION['if_lang'] = "eng";
+
+}
+
+$langfile = 'testresultstxt.php';
+
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+
+} else {
+
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+
+}
+
+require_once dirname(__FILE__) . '/account/parsers.php';
+require_once dirname(__FILE__) . '/stats/get_test_results.php';
+
+$link = connect();
+
+if (isset($_GET['user'])) {
+
+    if (!$bAdm && $_GET['user'] != $_SESSION['user_array']['user']) {
+
+        // TODO: first check if the user has already passed all the tests. If he has, he is allowed to see other user's results (providing they are public). If he hasn't, an alert will pop up and he will be redirected to the tests page
+        
+        die ("Function not active yet.");
+
+    }
+
+    if (($user = parse($_GET['user'])) !== 0) {
+
+        die("Error: Not authorized.");
+
+    }
+
+    $user = $_GET['user'];
+
+    $sql = "SELECT * FROM users WHERE user = :user";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user);
+    if ($stmt->execute()===false || $stmt->rowCount() < 1) {
+
+        die("Error: Not authorized.");
+
+    }
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$bAdm && (
+        (
+            ord($row['hprofile']) !== 0
+            || ord($row['hstats']) !== 0
+        )
+        &&
+        (
+            strtolower($user) !== strtolower($userArray['user'])
+        )
+    ) ){
+
+        die("Error: Not authorized.");
+
+    }
+
+    $input_language = $row['input_language'];
+    $working_group = $row['working_group'];
+    
+    $ua = $row;
+
+} else {
+
+    $ua = $_SESSION['user_array'];
+    $user = $_SESSION['user_array']['user'];
+    $input_language = $_SESSION['user_array']['input_language'];
+    $working_group = $_SESSION['user_array']['working_group'];
+
+}
+
+
+if (($ua['ditloid_lock_timestamp'] > 0) && ((time(
+            ) - $ua['ditloid_time_left_when_locked']) > 0)
+) {
+
+    $lttype[0]['ttype'] = "ditloid";
+    $lttype[0]['starttimefieldname'] = "ditloid_time_left_when_locked";
+    $lttype[0]['endtimefieldname'] = "ditloid_lock_timestamp";
+
+}
+
+if (($ua['timer_utestb_start'] > 0) && ((time() - $ua['timer_utestb_end']) > 0)
+) {
+
+    $lttype[1]['ttype'] = "utest";
+    $lttype[1]['starttimefieldname'] = "timer_utestb_start";
+    $lttype[1]['endtimefieldname'] = "timer_utestb_end";
+
+}
+
+if (($ua['timer_ctestb_start'] > 0) && ((time() - $ua['timer_ctestb_end']) > 0)
+) {
+
+    $lttype[2]['ttype'] = "ctest";
+    $lttype[2]['starttimefieldname'] = "timer_ctestb_start";
+    $lttype[2]['endtimefieldname'] = "timer_ctestb_end";
+
+}
+
+if (!isset($lttype)) {
+
+    /* You have to take the test before seeing any results... */
+
+    if (!$bAdm){ 
+        echo "<html>
+        <head>
+        <meta charset=\"utf-8\">
+        <title>" . TRES_ALERT_TITLE . "</title>
+        <script type='text/javascript'>
+            alert(\"" . TRES_ALERT . "\");
+            window.location='test_will_shortz_morgan_worthy_ditloid.phtml';
+        </script>
+        </head>
+        <body></body>
+        </html>";
+    } else {
+        echo "<html>
+        <head>
+        <meta charset=\"utf-8\">
+        <title>" . TRES_ALERT_TITLE . "</title>
+        <script type='text/javascript'>
+            alert(\"" . TRES_ALERT_ADMIN . "\");
+            window.location='admin/admusers.phtml';
+        </script>
+        </head>
+        <body></body>
+        </html>";
+    }
+    die;
+
+}
+    
+$scatter = get_allscatter($link, $user, $input_language);
+    
+if ($scatter===false){
+    http_response_code(500);
+    die("Error performing database operation.");
+}
+
+if (!isset($scatter)) {
+
+    echo "<!DOCTYPE html><html>" . PHP_EOL
+        . "<head>" . PHP_EOL
+        . "<meta charset=\"utf-8\">" . PHP_EOL
+        . "<title>" . TRES_ALERT_TITLE . "</title>" . PHP_EOL
+        . "<script type='text/javascript'>" . PHP_EOL
+        . "alert(\"" . TRES_ALERT . "\")" . PHP_EOL
+        . "window.location='test_will_shortz_morgan_worthy_ditloid.phtml'" . PHP_EOL
+        . "</script>" . PHP_EOL
+        . "<link href='.". SYNAPP_UI_RESOURCES_PATH ."/style/dist/consolidated.min.css' rel='stylesheet' type='text/css' />" . PHP_EOL
+        . "</head>" . PHP_EOL
+        . "<body><div id='wrap'><div id='content'>" . PHP_EOL;
+
+    $page = "test_results";
+
+    require_once dirname(__FILE__) . '/watrixbar.phtml';
+
+    echo "<h1>" . TRES_NORES_TITLE . "</h1>" . PHP_EOL
+        . "<p>" . TRES_NORES_ALERT . "</p>" . PHP_EOL
+        . "</div></div></body>" . PHP_EOL
+        . "</html>";
+
+    die;
+
+}
+
+$link = null;
+
+?><!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8"/>
+
+    <title>
+        <?php echo TRES_TITLE1 . $user . TRES_TITLE2; ?>
+    </title>
+
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+
+    <!--[if lt IE 8]>
+    <style type="text/css">
+
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+
+    </style>
+    <![endif]-->
+
+    <!--[if lte IE 8]>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/excanvas.min.js"></script>
+    <![endif]-->
+
+    <script type="text/javascript">
+
+        var typenames = [
+            '<?php echo TRES_SCATTERCANSWER; ?>',
+            '<?php echo TRES_SCATTERUANSWER; ?>',
+            '<?php echo TRES_SCATTERDANSWER; ?>'
+        ];
+
+    </script>
+
+    <script type="text/javascript" src=".<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.selection.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.stack.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.symbol.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.axislabels.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.navigate.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.curvedlines-0.2.1.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.mousewheel.min.js"></script>
+    <!--  <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jQAllRangeSliders-min.js"></script> -->
+    
+    <?php if ($bAdm): ?>
+
+        <link href="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+        <link href="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.css" type="text/css" rel="stylesheet" />
+        <link href="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.css" type="text/css" rel="stylesheet" />
+        <link href="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.css" type="text/css" rel="stylesheet" />
+        <link href="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/css/bootstrap-multiselect.min.css" type="text/css" rel="stylesheet" />
+
+        <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_PATH; ?>/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/js/bootstrap-multiselect.min.js"></script>
+
+    <?php endif; ?>
+    
+    <script type="text/javascript" src="stats/js/getAnswersTable.js"></script>
+
+</head>
+
+<body <?php  if (!$bAdm): ?>onload="getAnswersTable('','tests','<?php echo $user ?>',typenames);"<?php endif;?>>
+
+<div id="wrap">
+
+    <div id="content">
+
+        <?php
+
+        $page = "test_results";
+
+        require_once dirname(__FILE__) . '/watrixbar.phtml';
+
+        echo "<h1><span style='text-decoration:underline;'>" . TRES_HEADER . $user . '</span></h1>' . PHP_EOL;
+
+        ?>
+        <p style="font-size:x-large;font-weight:bold;">
+
+            <?php echo TRES_SCATTERDIAGRAM; ?>
+
+        </p>
+
+        <p style="font-size:medium;font-style:italic;">
+
+            <?php echo TRES_SCATTERDIAGRAM_2; ?>
+
+            <br/>
+
+            <?php echo TRES_SCATTERDIAGRAM_3; ?>
+
+        </p>
+
+        <div style="z-index:-1;width:560px;height:520px;margin: auto auto 40px;">
+
+            <div id="placeholderscatter" style="width:520px;height:520px;text-align:left;margin-bottom:0;"></div>
+
+        </div>
+
+        <script type="text/javascript">
+
+            var d5<?php if (isset($scatter[0])) {echo " = ".$scatter[0]['dots'];} ?>
+                , d6<?php if (isset($scatter[1])) {echo " = ".$scatter[1]['dots'];} ?>
+                , d7<?php if (isset($scatter[2])) {echo " = ".$scatter[2]['dots'];} ?>
+                , user = "<?php echo $user; ?>"
+                , authuser = "<?php echo $userArray['user']; ?>"
+                , bAdm = <?php echo $bAdm?'true':'false'; ?>
+                , scxaxlab = "<?php echo TRES_SCATTERXAXISLABEL; ?>"
+                , scyaxlab = "<?php echo TRES_SCATTERYAXISLABEL; ?>"
+                , scT1Ans = "<?php echo TRES_SCATTERDANSWER; ?>"
+                , scT2Ans = "<?php echo TRES_SCATTERUANSWER; ?>"
+                , scT3Ans = "<?php echo TRES_SCATTERCANSWER; ?>"
+                , bAssociation = false
+                , orderbytype = 'tests'
+                , scatterData = [
+                    [],
+                    [],
+                    []
+                ]
+                , labelType1 = "<?php echo TRES_SCATTERDANSWER; ?>"
+                , labelType2 = "<?php echo TRES_SCATTERCANSWER; ?>"
+                , labelType3 = "<?php echo TRES_SCATTERUANSWER; ?>";
+
+            <?php
+                foreach ($scatter as $i=>$sDi) {
+                
+                    foreach ($sDi['data'] as $j=>$sDij){
+                    
+                        foreach ($sDij as $k=>$sDijk){
+                        
+                            echo "scatterData[".$j."][".$k."] = new Array();";
+                            echo "scatterData[".$j."][".$k."]['id1'] = (user.toLowerCase()===authuser.toLowerCase())?'". $sDijk['id1']."':'';";
+                            echo "scatterData[".$j."][".$k."]['id2'] = '';";
+                            echo "scatterData[".$j."][".$k."]['word'] = '". addslashes($sDijk['word'])."';";
+                            echo "scatterData[".$j."][".$k."]['type'] = '". $sDijk['type']."';";
+                            
+                        }
+                        
+                    } 
+                    
+                }
+                
+            ?>
+            if (bAdm){
+                $(document).ready(function(){
+                    var table, $row, tt, data={}, $dttt;
+                    data.language = <?php $kk = file_get_contents(dirname(__FILE__)."/languages/{$_SESSION['if_lang']}/admin/dt.json"); echo $kk; ?>;
+
+                    table = $('#statstable').DataTable();
+
+                    tt = new $.fn.dataTable.TableTools( table, {"sSwfPath": "..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/../swf/copy_csv_xls_pdf.swf","aButtons": [
+                        {
+                            "sExtends":     "copy",
+                            "sButtonText": "Copiar"
+                        },
+                        {
+                            "sExtends":     "csv",
+                            "sButtonText": "CSV"
+                        },
+                        {
+                            "sExtends":     "xls",
+                            "sButtonText": "Excel"
+                        },
+                        {
+                            "sExtends":     "pdf",
+                            "sButtonText": "PDF"
+                        },
+                        {
+                            "sExtends":     "print",
+                            "sButtonText": "Imprimir"
+                        }
+                    ]} );
+
+                    $( tt.fnContainer() ).insertBefore('div.dataTables_wrapper');
+
+                    new $.fn.dataTable.ColReorder( table );
+
+                    $dttt = $('div.DTTT');
+                    $dttt.css('margin-bottom', '0.5em');
+                    $dttt.css('float', 'right');
+                    $('div.dataTables_wrapper').css('clear', 'both');
+                    $('table.dataTable th').css('vertical-align', 'top');
+                    $row = $('#usersList_wrapper').find('.row').eq(1);
+                    $row.css('width', '100%');
+                    $row.css('overflow-x', 'auto');
+                    $row.css('margin', 'auto');
+
+                    table.columns.adjust();
+                });
+            }
+
+        </script>
+
+        <script type="text/javascript" src="graphs/js/generateScatter.js"></script>
+
+        <div style="margin-left:auto;margin-right:auto;text-align:center;">
+
+            <span style="font-size:x-large;font-weight:bold;"><?php echo TRES_TANSWERSTABLE_1; ?></span>
+
+            <br/>
+
+            <span style="font-size:medium;font-style:italic;"><?php echo TRES_TANSWERSTABLE_2; ?></span>
+
+            <table id="statstable" class="statstable" style="margin-left:auto;margin-right:auto;text-align:center;">
+
+                <thead>
+
+                <tr>
+
+                    <th>
+
+                        <?php if (!$bAdm): ?><a href="#"
+                           onclick="getAnswersTable('answer','tests','<?php echo $user; ?>',typenames);
+                               return false;"><?php endif; echo TRES_TANSWER; ?><?php if (!$bAdm): ?> </a><?php endif; ?>
+
+                    </th>
+
+                    <th>
+
+                        <?php if (!$bAdm): ?><a href="#"
+                           onclick="getAnswersTable('type','tests','<?php echo $user; ?>',typenames);
+                               return false;"><?php endif; echo TRES_TTYPE; ?><?php if (!$bAdm): ?> </a><?php endif; ?>
+
+                    </th>
+
+                    <th>
+
+                        <?php if (!$bAdm): ?><a href="#"
+                           onclick="getAnswersTable('points','tests','<?php echo $user; ?>',typenames);
+                               return false;"><?php endif; echo TRES_TPOINTSORG; ?><?php if (!$bAdm): ?> </a><?php endif; ?>/<?php if (!$bAdm): ?><a href="#"
+                                                                                    onclick="getAnswersTable('points','tests','<?php echo $user; ?>',typenames);
+                                                                                        return false;"><?php endif; echo TRES_TPOINTSINT; ?><?php if (!$bAdm): ?> </a><?php endif; ?>
+                        (<?php if (!$bAdm): ?><a href="#"
+                            onclick="getAnswersTable('points','tests','<?php echo $user; ?>',typenames);
+                                return false;"><?php endif; echo TRES_TPOINTS; ?><?php if (!$bAdm): ?> </a><?php endif; ?>)
+
+                    </th>
+
+                    <th>
+
+                        <?php echo TRES_TFULLVOTES; ?> (<?php if (!$bAdm): ?><a href="#"
+                                                           onclick="getAnswersTable('upvotesint','tests','<?php echo $user; ?>',typenames);
+                                                               return false;"><?php endif; echo TRES_TCRE; ?><?php if (!$bAdm): ?> </a><?php endif; ?>/<?php if (!$bAdm): ?><a href="#"
+                                                                                                              onclick="getAnswersTable('upvotescre','tests','<?php echo $user; ?>',typenames);
+                                                                                                                  return false;"><?php endif; echo TRES_TUND; ?><?php if (!$bAdm): ?> </a><?php endif; ?>)
+
+                    </th>
+
+                    <th>
+
+                        <?php echo TRES_THALFVOTES; ?> (<?php if (!$bAdm): ?><a href="#"
+                                                           onclick="getAnswersTable('neutralvotesint','tests','<?php echo $user; ?>',typenames);
+                                                               return false;"><?php endif; echo TRES_TCRE; ?><?php if (!$bAdm): ?> </a><?php endif; ?>/<?php if (!$bAdm): ?><a href="#"
+                                                                                                              onclick="getAnswersTable('neutralvotescre','tests','<?php echo $user; ?>',typenames);
+                                                                                                                  return false;"><?php endif; echo TRES_TUND; ?><?php if (!$bAdm): ?> </a><?php endif; ?>)
+
+                    </th>
+
+                    <th>
+
+                        <?php echo TRES_TZEROVOTES; ?> (<?php if (!$bAdm): ?><a href="#"
+                                                           onclick="getAnswersTable('downvotesint','tests','<?php echo $user; ?>',typenames);
+                                                               return false;"><?php endif; echo TRES_TCRE; ?><?php if (!$bAdm): ?> </a><?php endif; ?>/<?php if (!$bAdm): ?><a href="#"
+                                                                                                              onclick="getAnswersTable('downvotescre','tests','<?php echo $user; ?>',typenames);
+                                                                                                                  return false;"><?php endif; echo TRES_TUND; ?><?php if (!$bAdm): ?> </a><?php endif; ?>)
+
+                    </th>
+
+                    <th>
+
+                        <?php if (!$bAdm): ?><a href="#"
+                           onclick="getAnswersTable('timestamp','tests','<?php echo $user; ?>',typenames);
+                               return false;"><?php endif; echo TRES_TTIMEOFASSOC; ?><?php if (!$bAdm): ?> </a><?php endif; ?>
+
+                    </th>
+
+                </tr>
+
+                </thead>
+
+                <tbody id="answersTableBody"><?php if ($bAdm){
+                    $_REQUEST['orderby'] = '';
+                    $_REQUEST['orderbytype'] = 'tests';
+                    $_REQUEST['type_1'] = TRES_SCATTERCANSWER;
+                    $_REQUEST['type_2'] = TRES_SCATTERUANSWER;
+                    $_REQUEST['type_3'] = TRES_SCATTERDANSWER;
+                    require dirname(__FILE__).'/stats/get_answers_table.php';
+                }  ?></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

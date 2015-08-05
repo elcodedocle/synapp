@@ -1,0 +1,515 @@
+<?php
+session_start();
+if ( !isset($_SESSION['adm']) || $_SESSION['adm'] !== true ) {
+    header("Location: admlogin.phtml?location=admresources.phtml");
+    die();
+}
+require_once dirname(__FILE__) . '/../account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/../account/'.SYNAPP_CONFIG_DIRNAME.'/profile_constants_constraints_defaults_and_selector_values.php';
+require_once dirname(__FILE__) . '/admresources/get_list_fieldnames.php';
+require_once dirname(__FILE__) . '/../connect.php';
+
+/** @noinspection PhpIncludeInspection */
+require_once dirname(__FILE__) . "/../languages/{$_SESSION['if_lang']}/admin/admresourcestxt.php";
+
+require_once dirname(__FILE__) . '/../selectors/option_list.php';
+
+require_once dirname(__FILE__) . '/../languages/get_all_languages_array.php';
+
+$allLanguagesArray = get_all_languages_array();
+$iso6391lang = array_search($allLanguagesArray[$_SESSION['if_lang']],$allLanguagesArray);
+
+$link = connect();
+
+/**
+ * @param \PDO $link
+ * @return array
+ */
+function get_collections_list_selector($link)
+{
+    $stmt = $link->query("SELECT `collectionid`, `collectionname` FROM `image_collections`");
+
+    $list = array();
+    $i = 0;
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $list[]['name'] = $row['collectionname'];
+        $list[$i]['val'] = $row['collectionid'];
+        $i++;
+    }
+    return option_list($list, $list[0]['val']);
+}
+$collectionOptions = get_collections_list_selector($link);
+$link = null;
+?><!doctype html>
+<html>
+<head>
+    <title>
+        <?php echo ADMRESOURCES_TITLE; ?>
+    </title>
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link href="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/css/bootstrap-multiselect.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_BOOTSTRAP_FILEINPUT_PATH; ?>/css/fileinput.min.css" type="text/css" rel="stylesheet" />
+    <link href="..<?php echo SYNAPP_LIGHTBOX2_PATH; ?>/css/lightbox.css" rel="stylesheet" type="text/css"/>
+
+    <link href="..<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    
+    <script type="text/javascript" src="..<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_PATH; ?>/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_FILEINPUT_PATH; ?>/js/fileinput.min.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_FILEINPUT_PATH; ?>/js/fileinput_locale_<?php echo $iso6391lang; ?>.js"></script>
+    <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/js/bootstrap-multiselect.min.js"></script>
+
+    <script type="text/javascript">
+        var table, groupsTable, tResourcesTable;
+        function addGroup(groupName){
+            if (typeof groupName !== "string" || (groupName = groupName.trim()).length <= 0){
+                alert("<?php echo ADMRESOURCES_EMPTYGROUPNAME; ?>");
+                return;
+            }
+            $.ajax({
+                url: 'admresources/process_group.php'
+                , method: 'post'
+                , data: {
+                    group_name: groupName
+                }
+            }).done(
+                function(){
+                    $.ajax({
+                        url: 'admresources/get_groups_dataset.php',
+                        dataType: 'json'
+                    }).done(function(result){createGroupsTable(result);});
+                }
+            );
+        }
+        function addTestResource(){
+            $.ajax({
+                url: 'admresources/process_test_resource.php'
+                , method: 'post'
+                , data: {
+                    create: 'true'
+                }
+            }).done(
+                function(){
+                    $.ajax({
+                        url: 'admresources/get_test_resources_dataset.php',
+                        dataType: 'json'
+                    }).done(function(result){createTestResourcesTable(result);});
+                }
+            );
+        }
+        function deleteResource(resourceId, tableRow){
+            if (window.confirm('<?php echo ADMRESOURCES_CONFIRMRESOURCEDELETION; ?>')) {
+                $.ajax({
+                    url: 'admresources/remove_resource.php'
+                    , data: {
+                        id: resourceId
+                    }
+                }).done(
+                    function(){
+                        tableRow.remove();
+                        table.draw();
+                    }
+                );
+            }
+        }
+        function deleteTestResource(resourceId, tableRow){
+            if (window.confirm('<?php echo ADMRESOURCES_CONFIRMTESTRESOURCEDELETION; ?>')) {
+                if (window.confirm('<?php echo ADMRESOURCES_RECONFIRMTESTRESOURCEDELETION; ?>')) {
+                    $.ajax({
+                        url: 'admresources/remove_test_resource.php'
+                        , data: {
+                            id: resourceId
+                        }
+                    }).done(
+                        function(){
+                            tableRow.remove();
+                            tResourcesTable.draw();
+                        }
+                    );
+                }
+            }
+        }
+        function deleteGroup(resourceId, tableRow){
+            if (window.confirm('<?php echo ADMRESOURCES_CONFIRMGROUPDELETION; ?>')) {
+                if (window.confirm('<?php echo ADMRESOURCES_RECONFIRMGROUPDELETION; ?>')) {
+                    $.ajax({
+                        url: 'admresources/remove_group.php'
+                        , data: {
+                            id: resourceId
+                        }
+                    }).done(
+                        function(){
+                            tableRow.remove();
+                            groupsTable.draw();
+                        }
+                    );
+                }
+            }
+        }
+        function saveTestResourceTypes(option, checked){
+            if (checked){
+                $.ajax({
+                    url: 'admresources/process_test_resource.php'
+                    , method: 'post'
+                    , data: {
+                        tresourceid: $(option).closest('select').attr('data-resourceid')
+                        , ttypeid: $(option).val()
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: 'admresources/process_test_resource.php'
+                    , method: 'post'
+                    , data: {
+                        tresourceid: $(option).closest('select').attr('data-resourceid')
+                        , ttypeid: $(option).val()
+                        , deleteEntry: 'true'
+                    }
+                });
+            }
+        }
+        function saveGroupCollections(option, checked){
+            if (checked){
+                $.ajax({
+                    url: 'admresources/process_group.php'
+                    , method: 'post'
+                    , data: {
+                        groupid: $(option).closest('select').attr('data-groupid')
+                        , collectionid: $(option).val()
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: 'admresources/process_group.php'
+                    , method: 'post'
+                    , data: {
+                        groupid: $(option).closest('select').attr('data-groupid')
+                        , collectionid: $(option).val()
+                        , deleteEntry: 'true'
+                    }
+                });
+            }
+        }
+        function saveGroupTestResources(option, checked){
+            if (checked){
+                $.ajax({
+                    url: 'admresources/process_group.php'
+                    , method: 'post'
+                    , data: {
+                        groupid: $(option).closest('select').attr('data-groupid')
+                        , stage: $(option).closest('select').attr('data-stage')
+                        , resourceid: $(option).val()
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: 'admresources/process_group.php'
+                    , method: 'post'
+                    , data: {
+                        groupid: $(option).closest('select').attr('data-groupid')
+                        , stage: $(option).closest('select').attr('data-stage')
+                        , resourceid: $(option).val()
+                        , deleteEntry: 'true'
+                    }
+                });
+            }
+        }
+        function saveTestResourceValue(tResourceId, tResourceLang, tResourceDesc){
+            $.ajax({
+                url: 'admresources/process_test_resource.php'
+                , method: 'post'
+                , data: {
+                    tresourceid: tResourceId
+                    , tresourcelang: tResourceLang
+                    , tresourcedesc: tResourceDesc
+                }
+            });
+        }
+        function createResourcesTable(result){
+            var data = result['tableDataSet'], protectDoubleClick = false, $row, $div, tt, $resourcesList, $groupsSelector, $fieldNamesSelectorContainer;
+            $('#collectionItemsContainer').html( '<table cellspacing="0" width="100%" class="table table-striped table-bordered" id="resourcesList"></table>' );
+            $resourcesList = $('#resourcesList');
+            data.language = <?php $dtJson = file_get_contents(dirname(__FILE__)."/../languages/{$_SESSION['if_lang']}/admin/dt.json"); echo $dtJson; ?>;
+
+            for(var i = 0; i<data.data.length; i++){
+                data.data[i][3] = data.data[i][3] + ' [<a href="#" onclick="deleteResource(\''+data.data[i][0]+'\', table.row($(this).closest(\'tr\'))); return false;">x</a>]';
+                data.data[i][0] = '<a href="'+data.data[i][0]+'" data-lightbox="resources" data-title="'+data.data[i][0]+'"><img width="60px" class="syn-shadow" src="../../uploads/images/'+data.data[i][0]+'" title="'+data.data[i][0]+'" alt="'+data.data[i][0]+'" />'+'</a>';
+            }
+
+            table = $resourcesList.DataTable(
+                data
+            );
+
+            tt = new $.fn.dataTable.TableTools( table, {"sSwfPath": "..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/../swf/copy_csv_xls_pdf.swf","aButtons": [
+                {
+                    "sExtends":     "copy",
+                    "sButtonText": "<?php echo ADMRESOURCES_COPY; ?>"
+                },
+                {
+                    "sExtends":     "csv",
+                    "sButtonText": "<?php echo ADMRESOURCES_CSV; ?>"
+                },
+                {
+                    "sExtends":     "xls",
+                    "sButtonText": "<?php echo ADMRESOURCES_EXCEL; ?>"
+                },
+                {
+                    "sExtends":     "pdf",
+                    "sButtonText": "<?php echo ADMRESOURCES_PDF; ?>"
+                },
+                {
+                    "sExtends":     "print",
+                    "sButtonText": "<?php echo ADMRESOURCES_PRINT; ?>"
+                }
+            ]} );
+
+            $( tt.fnContainer() ).insertBefore('div.dataTables_wrapper');
+
+            new $.fn.dataTable.ColReorder( table );
+
+            $div = $('div.DTTT');
+            $div.css('margin-bottom', '0.5em');
+            $div.css('float', 'right');
+            $('div.dataTables_wrapper').css('clear', 'both');
+            $('table.dataTable th').css('vertical-align', 'top');
+            $row = $('#resourcesList_wrapper').find('.row').eq(1);
+            $row.css('width', '100%');
+            $row.css('overflow-x', 'auto');
+            $row.css('margin', 'auto');
+
+            table.columns( '.select-filter' ).every( function () {
+                var that = this;
+
+                // Create the select list and search operation
+                $groupsSelector = $('#groupsSelector');
+                if ($groupsSelector.size()>0){
+                    $groupsSelector.remove();
+                }
+                var select = $('<select id="groupsSelector" multiple="multiple" ></select>')
+                    .appendTo(
+                        '#groupsFilter'
+                    )
+                    .on( 'change', function () {
+                        that
+                            .search( $(this).val()!==null?'(('+$(this).val().join(')|(')+'))':'', true )
+                            .draw();
+                    } );
+                // Get the search data for the first column and add to the select list
+                this
+                    .cache( 'search' )
+                    .sort()
+                    .unique()
+                    .each( function ( d ) {
+                        select.append( $('<option value="'+d+'" selected="selected">'+d+'</option>') );
+                    } );
+            } );
+            $groupsSelector = $('#groupsSelector');
+            $groupsSelector.multiselect({maxHeight: 400, includeSelectAllOption: true, selectAllText:'<?php echo ADMRESOURCES_SELECTALLTEXT; ?>', nSelectedText: '<?php echo ADMRESOURCES_SELECTEDTEXT; ?>', nonSelectedText: '<?php echo ADMRESOURCES_NONSELECTEDTEXT; ?>', allSelectedText: '<?php echo ADMRESOURCES_ALLSELECTEDTEXT; ?>'});
+            $groupsSelector.multiselect('selectAll', true);
+            $groupsSelector.multiselect('updateButtonText');
+
+            table.columns.adjust();
+
+            $fieldNamesSelectorContainer = $('#fieldNamesSelectorContainer');
+            $fieldNamesSelectorContainer.find('.multiselect-container.dropdown-menu li a').on( 'click', function () {
+                // Get the column API object
+                var column = table.column( $(this).find('input').val() );
+                // Toggle the visibility
+                if (!protectDoubleClick){
+                    column.visible( ! column.visible() );
+                }
+                protectDoubleClick = !protectDoubleClick;
+            } );
+
+            $fieldNamesSelectorContainer.find('.multiselect-container.dropdown-menu li').each(function (){
+                var column = table.column( $(this).find('input').val() );
+                column.visible( $(this).hasClass('active') );
+            } );
+        }
+        function createGroupsTable(result){
+            var data = result['tableDataSet'], $userGroupsTable;
+            $('#userGroupsContainer').html( '<table cellspacing="0" width="100%" class="table table-striped table-bordered" id="userGroupsTable"></table>' );
+            $userGroupsTable = $('#userGroupsTable');
+            data.language = <?php $dtJson = file_get_contents(dirname(__FILE__)."/../languages/{$_SESSION['if_lang']}/admin/dt.json"); echo $dtJson; ?>;
+
+            for(var i = 0; i<data.data.length; i++){
+                data.data[i][0] = '[<a href="#" onclick="deleteGroup($(this).closest(\'tr\').find(\'select\').first().attr(\'data-groupid\'), groupsTable.row($(this).closest(\'tr\'))); return false;">x</a>] ' + data.data[i][0];
+            }
+
+            groupsTable = $userGroupsTable.DataTable(
+                data
+            );
+
+            $('.groupCollectionsSelector').each(function(){$(this).multiselect({maxHeight: 400,onChange: function(option, checked) {saveGroupCollections(option, checked);}});});
+            $('.groupResourcesCTestPreSelector').each(function(){$(this).multiselect({maxHeight: 400,onChange: function(option, checked) {saveGroupTestResources(option, checked);}});});
+            $('.groupResourcesCTestPostSelector').each(function(){$(this).multiselect({maxHeight: 400,onChange: function(option, checked) {saveGroupTestResources(option, checked);}});});
+            $('.groupResourcesUTestPreSelector').each(function(){$(this).multiselect({maxHeight: 400,onChange: function(option, checked) {saveGroupTestResources(option, checked);}});});
+            $('.groupResourcesUTestPostSelector').each(function(){$(this).multiselect({maxHeight: 400,onChange: function(option, checked) {saveGroupTestResources(option, checked);}});});
+        }
+        function createTestResourcesTable(result){
+            var data = result['tableDataSet'], $testResourcesTable;
+            $('#testResourcesContainer').html( '<table cellspacing="0" width="100%" class="table table-striped table-bordered" id="testResourcesTable"></table>' );
+            $testResourcesTable = $('#testResourcesTable');
+            data.language = <?php $dtJson = file_get_contents(dirname(__FILE__)."/../languages/{$_SESSION['if_lang']}/admin/dt.json"); echo $dtJson; ?>;
+
+            for(var i = 0; i<data.data.length; i++){
+                for(var j = 1; j<data.data[i].length; j++){
+                    if (data.data[i][j].trim().length>0){
+                        data.data[i][j] = '<span onclick="$(this).hide();$(this).next(\'input\').show();$(this).next(\'input\').focus();">'+data.data[i][j] + '</span><input style="display:none" value="'+data.data[i][j]+'" onblur="saveTestResourceValue(\''+result['testResourceIds'][i]+'\',\''+result['testResourceLangs'][j-1]+'\',$(this).val()); $(this).hide();$(this).prev(\'span\').text($(this).val());$(this).prev(\'span\').show();" />';
+                    } else {
+                        data.data[i][j] = '<span style="display:none" onclick="$(this).hide();$(this).next(\'input\').show();$(this).next(\'input\').focus();">'+data.data[i][j] + '</span><input value="'+data.data[i][j]+'" onblur="saveTestResourceValue(\''+result['testResourceIds'][i]+'\',\''+result['testResourceLangs'][j-1]+'\',$(this).val()); $(this).hide();$(this).prev(\'span\').text($(this).val());$(this).prev(\'span\').show();" />';
+                    }
+                }
+                data.data[i][0] = '[<a href="#" onclick="deleteTestResource($(this).closest(\'tr\').find(\'select\').first().attr(\'data-resourceid\'), tResourcesTable.row($(this).closest(\'tr\'))); return false;">x</a>] ' + data.data[i][0];
+            }
+
+            tResourcesTable = $testResourcesTable.DataTable(
+                data
+            );
+
+            $('.testResourcesTypesSelector').each(function(){$(this).multiselect({maxHeight: 400,onChange: function(option, checked) {saveTestResourceTypes(option, checked);}});});
+        }
+        $(document).ready(function(){
+            $('#fieldNames').multiselect({maxHeight: 400, includeSelectAllOption: true, selectAllText:'<?php echo ADMRESOURCES_SELECTALLTEXTM; ?>', nSelectedText: '<?php echo ADMRESOURCES_SELECTEDTEXTM; ?>', nonSelectedText: '<?php echo ADMRESOURCES_NONSELECTEDTEXTM; ?>', allSelectedText: '<?php echo ADMRESOURCES_ALLSELECTEDTEXTM; ?>'});
+            $.ajax({
+                url: 'admresources/get_resources_dataset.php',
+                dataType: 'json'
+            }).done(function(result){createResourcesTable(result);});
+            $.ajax({
+                url: 'admresources/get_groups_dataset.php',
+                dataType: 'json'
+            }).done(function(result){createGroupsTable(result);});
+            $.ajax({
+                url: 'admresources/get_test_resources_dataset.php',
+                dataType: 'json'
+            }).done(function(result){createTestResourcesTable(result);});
+        });
+    </script>
+    <style>
+        .multiselect-container input[type='radio']
+        {
+            display: none
+        }
+        .multiselect-container>li>a>label.radio{
+            padding-left: 20px !important;
+        }
+        .syn-shadow{
+            -moz-box-shadow: 2px 2px 3px 2px #ccc;
+            -webkit-box-shadow: 2px 2px 3px 2px #ccc;
+            box-shadow: 2px 2px 3px 2px #ccc;
+        }
+        .center{
+            text-align: center;
+            vertical-align: middle !important;
+        }
+        .lb-number{
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    
+    <div class="row">
+        <?php $page = "admresources"; $contextPath="../";
+        require_once dirname(__FILE__) . '/../watrixbar.phtml'; ?>
+    </div>
+    
+    <h1><?php echo ADMRESOURCES_COLLECTIONLIST; ?></h1>
+
+    <form style="float:left">
+        <div id="fieldNamesSelectorContainer" style="display:inline-block">
+    <label for="fieldNames"><?php echo ADMRESOURCES_SELECTFIELDS; ?></label>
+    <select name="fieldNames" id="fieldNames" multiple="multiple">
+        <?php $options = get_resources_list_fieldname_options(); foreach ($options as $option) { echo $option; } ?>
+    </select></div>&nbsp;&nbsp;
+    <label id="groupsFilter"><?php echo ADMRESOURCES_SELECTGROUPS; ?>
+    </label>
+    </form>
+    
+    <div id="collectionItemsContainer" style="width:100%;margin:auto;"></div>
+    
+    <h2><?php echo ADMRESOURCES_ADDRESOURCES; ?></h2>
+    <form style="margin-bottom:2em" method="post" action="admresources/process_upload.php" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="collectionSelector">
+                <?php echo ADMRESOURCES_ADDTOASSOCCOLL; ?>
+            </label>
+
+            <select name="collectionSelector" id="collectionSelector" onchange="if(this.value==='__add_newgroup') {$('#newCollectionInput').css('display', 'inline-block')} else {$('#newCollectionInput').hide()}">
+                <?php foreach($collectionOptions as $option) { echo $option; } ?>
+                <option value="__add_newgroup">
+                    <?php echo ADMRESOURCES_NEWCOLLECTION; ?>
+                </option>
+            </select>&nbsp;&nbsp;
+            <div class="control-group" id="newCollectionInput" style="display:none">
+                <label for="collectionName" class="control-label">
+                    <?php echo ADMRESOURCES_COLLECTIONNAMEINPUT; ?>
+                </label>
+                <input name="collectionName" id="collectionName" type="text" class="form-control" value="" style="display:inline-block;width:200px"/>
+            </div>
+        </div>
+        <input id="images" name="images[]" type="file" multiple class="file-loading" accept="image/*">
+        <script>
+            $("#images").fileinput({
+                language: "<?php echo $iso6391lang; ?>",
+                uploadUrl: "admresources/process_upload.php",
+                allowedFileExtensions: ["webp", "pjpeg", "jpeg", "jpg", "png", "gif"],
+                maxImageWidth: 400,
+                maxImageHeight: 400,
+                maxFileSize: <?php echo MAX_IMAGE_SIZE_BYTES; ?>,
+                uploadExtraData: function() {
+                    var collection = $("#collectionSelector").val();
+                    if (collection === '__add_newgroup'){
+                        return {
+                            collection_name: $("#collectionName").val()
+                        };
+                    } else {
+                        return {
+                            collectionid: collection
+                        };
+                    }
+                }
+            });
+            $('#images').on('filebatchuploadcomplete', function() {
+                $.ajax({
+                    url: 'admresources/get_resources_dataset.php',
+                    dataType: 'json'
+                }).done(function(result){createResourcesTable(result);});
+            });
+        </script>
+    </form>
+    <h2><?php echo ADMRESOURCES_USERGROUPS; ?></h2>
+    <form method="post" action="admresources/process_group.php">
+        <div class="form-group">
+            <div class="control-group" id="newGroupInput">
+                <label for="groupName" class="control-label">
+                    <?php echo ADMRESOURCES_GROUPNAMEINPUT; ?>
+                </label>
+                <input name="groupName" id="groupName" type="text" class="form-control" value="" style="display:inline-block;width:200px"/>
+                &nbsp;&nbsp;<button type="button" id="newGroupButton" class="btn btn-primary" onclick="addGroup($('#groupName').val())"><?php echo ADMRESOURCES_ADDGROUPBUTTON; ?></button>
+            </div>
+        </div>
+        <div id="userGroupsContainer" style="width:100%;margin:auto;"></div>
+    </form>
+    <h2><?php echo ADMRESOURCES_TESTRESOURCES; ?></h2>
+    <form method="post" action="admresources/process_test_resource.php">
+        <div class="form-group">
+            <div class="control-group" id="newResourceInput">
+                <button type="button" class="btn btn-primary" onclick="addTestResource()"><?php echo ADMRESOURCES_ADDRESOURCEBUTTON; ?></button>
+            </div>
+        </div>
+        <div id="testResourcesContainer" style="width:100%;margin:auto;"></div>
+    </form>
+
+</div>
+<script type="text/javascript" src="..<?php echo SYNAPP_LIGHTBOX2_PATH; ?>/js/lightbox.min.js"></script>
+</body>
+</html>

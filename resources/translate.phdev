@@ -1,0 +1,167 @@
+<?php
+/**
+ * WARNING!!!
+ * 
+ * Due to remote code execution vulnerabilities this code is not test or 
+ * production ready and it is only to be used on local development 
+ * servers open only to local host connections and under admin supervision. 
+ * 
+ * rename it to translate.phtml and put it into /path/to/synapp in order to 
+ * allow its execution
+ * 
+ * YOU HAVE BEEN WARNED!!!
+ */
+if (SYNAPP_DEPLOYMENT_ENVIRONMENT !== 'DEVELOPMENT'){
+    error_log('Security block on translate.phtml. Please check deployment configuration or delete the script from this deployment.');
+    die('Execution blocked.');
+}
+function list_files()
+{
+    echo "<html>
+    <head><meta charset=\"utf-8\"><title>Pick a file to translate:</title>
+    </head>
+    <body><h1>Pick a file to translate...</h1>";
+    $files = array();
+    if ($handle = opendir('languages/' . $_SESSION['if_lang'] . '/' . $_SESSION['translate']['from'])) {
+        while (false !== ($entry = readdir($handle))) {
+            if ($entry != "." && $entry != "..") {
+                $files[] = $entry;
+            }
+        }
+        closedir($handle);
+    }
+
+    foreach ($files as $filename) {
+        echo "<br /><a href=\"translate.phtml?from=" . $_SESSION['translate']['from'] . "&to=" . $_SESSION['translate']['to'] . "&filename=" . $filename . "\">" . $filename . "</a>";
+    }
+    echo "</body>
+    </html>";
+}
+
+session_start();
+if (isset($_SESSION['auth']) ? ($_SESSION['auth'] === true ? ($_SESSION['user_array']['user'] === 'gael' ? false : true) : true) : true) {
+    echo "<script type=\"text/javascript\">alert(\"Sorry, you're not authorized to use the interface translation tool.\");window.location='index.php';</script>";
+    die;
+}
+if (isset($_POST['val0'])) {
+    $i = 0;
+    $outf = fopen('languages/' . $_SESSION['if_lang'] . '/' . $_POST['to'] . '/' . $_POST['filename'], 'w');
+    fwrite($outf, '<?php' . PHP_EOL);
+    while (isset($_POST['val' . $i])) {
+        fwrite($outf, "define('" . $_POST['name' . $i] . "',\"" . $_POST['val' . $i] . "\");" . PHP_EOL);
+        $i++;
+    }
+    fwrite($outf, '?>' . PHP_EOL);
+    fclose($outf);
+    header("Location: translate.phtml?from=" . $_POST['from'] . '&to=' . $_POST['to']);
+}
+$_SESSION['translate']['from'] = (isset($_GET['from'])) ? $_GET['from'] : 'eng';
+$_SESSION['translate']['to'] = (isset($_GET['to'])) ? $_GET['to'] : 'pol';
+if (!isset($_GET['filename'])) {
+    list_files($_SESSION['translate']['from']);
+    die;
+}
+
+/** @noinspection PhpIncludeInspection */
+require_once dirname(
+        __FILE__
+    ) . '/languages/' . $_SESSION['if_lang'] . '/' . $_SESSION['translate']['from'] . '/' . $_GET['filename'];
+$outconstants = '';
+if (file_exists(
+    dirname(
+        __FILE__
+    ) . '/languages/' . $_SESSION['if_lang'] . '/' . $_SESSION['translate']['to'] . '/' . $_GET['filename']
+)
+) {
+    /* todo: change for process constants from that file to use as default values */
+    $outf = fopen(
+        dirname(
+            __FILE__
+        ) . '/languages/' . $_SESSION['if_lang'] . '/' . $_SESSION['translate']['to'] . '/' . $_GET['filename'],
+        'r'
+    );
+    while (($line = fgets($outf)) !== false) {
+        if (strpos($line, 'define') !== false) {
+            $parts = explode(
+                "\"",
+                implode("\"", explode("'", implode("\\q", explode("\\\"", implode("\\s", explode("\\'", $line))))))
+            );
+            $name = $parts[1];
+            $value = implode("\\'", explode("\\s", implode("\\\"", explode("\\q", $parts[3]))));
+            $outconstants[$name] = $value;
+        }
+    }
+}
+$constants = get_defined_constants(true);
+$constants = $constants['user'];
+require_once dirname(__FILE__) . '/languages/get_language_by_iso6392_code.php';
+require_once dirname(__FILE__) . '/connect.php';
+require_once dirname(__FILE__) . '/languages/ms_trans.php';
+require_once dirname(__FILE__) . '/account/' . SYNAPP_CONFIG_DIRNAME . '/ms_translator_credentials.php';
+$link = connect();
+$tolangname = get_language_by_iso6392_code($_SESSION['translate']['to'], $link);
+$link = null;
+echo "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Translating file " . $_GET['filename'] . "</title></head>
+<body>
+<!-- Google Translate Element -->
+<div id=\"google_translate_element\" style=\"display:block\"></div><script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: \"en\"}, \"google_translate_element\");
+};</script>
+<script src=\"http://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit\"></script>
+<h1>Please input <span style='font-weight:bold;'>" . $tolangname . "</span> translation for the following sentences:</h1>
+<form method=\"post\">
+<input type='hidden' name='from' value='" . $_SESSION['translate']['from'] . "' />
+<input type='hidden' name='to' value='" . $_SESSION['translate']['to'] . "' />
+<input type='hidden' name='filename' value='" . $_GET['filename'] . "' />" . PHP_EOL;
+$i = 0;
+$grantType = SYNAPP_TRANS_UTIL_GRANTTYPE;
+$scopeUrl = SYNAPP_TRANS_UTIL_SCOPEURL;
+$clientID = SYNAPP_TRANS_UTIL_CLIENTID;
+$clientSecret = SYNAPP_TRANS_UTIL_CLIENTSECRET;
+$authUrl = SYNAPP_TRANS_UTIL_AUTHURL;
+foreach ($constants as $name => $value) {
+    if (isset($outconstants[$name])) {
+        $translatedStr = $outconstants[$name];
+    } else {
+
+        //Create the AccessTokenAuthentication object.
+        $authObj = new AccessTokenAuthentication();
+        //Get the Access token.
+        $accessToken = $authObj->getTokens($grantType, $scopeUrl, $clientID, $clientSecret, $authUrl);
+        //Create the authorization Header string.
+        $authHeader = "Authorization: Bearer " . $accessToken;
+
+        //Set the params.//
+        $fromLanguage = "en";
+        $toLanguage = "pl";
+        $inputStr = $value;
+        $contentType = 'text/plain';
+        $category = 'general';
+
+        $params = "text=" . urlencode($inputStr) . "&to=" . $toLanguage . "&from=" . $fromLanguage;
+        $translateUrl = "http://api.microsofttranslator.com/v2/Http.svc/Translate?$params";
+
+        //Create the Translator Object.
+        $translatorObj = new HTTPTranslator();
+
+        //Get the curlResponse.
+        $curlResponse = $translatorObj->curlRequest($translateUrl, $authHeader);
+
+        //Interprets a string of XML into an object.
+        $xmlObj = simplexml_load_string($curlResponse);
+        foreach ((array)$xmlObj[0] as $val) {
+            $translatedStr = $val;
+        }
+
+    }
+    echo "<p>" . $value . "<br />
+    <input type='hidden' name='name" . $i . "' value='" . $name . "'/>
+    <input name='val" . $i . "' type='text' size='200' value='" . (isset($translatedStr) ? $translatedStr : '') . "'/>
+    </p>";
+    $i++;
+}
+echo "<input type='submit' value='send translation' />
+</form>
+</body>
+</html>";

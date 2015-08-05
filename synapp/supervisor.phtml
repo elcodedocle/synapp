@@ -1,0 +1,123 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+if (!isset($_SESSION['auth'])) {
+    header("Location: login.phtml?location=supervisor.phtml");
+    die();
+}
+if ($_SESSION['auth'] !== true) {
+    header("Location: login.phtml?location=supervisor.phtml");
+    die();
+}
+if (ord($_SESSION['user_array']['confirmed_email']) === 0) {
+    header(
+        "Location: profile.phtml?user="
+        . $_SESSION['user_array']['user'] . "&edit=email&alert=true"
+    );
+    die();
+}
+if (($_SESSION['user_array']['gotestbefore'] == "1")
+    && ((($_SESSION['user_array']['ditloid_lock_timestamp'] > time())
+            && ($_SESSION['user_array']['ditloid_time_left_when_locked'] == 0)) || ($_SESSION['user_array']['ditloid_lock_timestamp'] == 0))
+) {
+    header("Location: test_will_shortz_morgan_worthy_ditloid.phtml");
+    die();
+}
+if (($_SESSION['user_array']['timer_utestb_end'] == "0")) {
+    header("Location: uctest.phtml?ttype=utest");
+    die();
+}
+if (($_SESSION['user_array']['timer_ctestb_end'] == "0")) {
+    header("Location: uctest.phtml?ttype=ctest");
+    die();
+}
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'supervisortxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+require_once dirname(__FILE__) . '/watrix/get_evaluation_pair.php';
+require_once dirname(__FILE__) . '/watrix/put_evaluation.php';
+
+$link = connect();
+if (count($_POST)) {
+    put_evaluation($link);
+}
+/* select one association from a random (different) user from a different group */
+/* if no association select (user+i)%count(users) */
+/* if user=user skip */
+/* repeat until association or i==count(users) */
+
+$pair = get_evaluation_pair($link);
+if ($pair === false) {
+    $link = null;
+    header("Location: watrix/finish.php?type=3");
+    die();
+}
+$_SESSION['rand_ticket'] = hash("sha256", mt_rand());
+$ticket = hash("sha256", $_SESSION['rand_ticket'] . $pair['otheruser']);
+$_SESSION['otheruser'] = $pair['otheruser'];
+
+$_SESSION['justlogged'] = false;
+$link = null;
+/* $display_order=($ticket%2)?array("id1","id2"):array("id2","id1"); */
+$display_order = array("id1", "id2");
+$_SESSION['hashed_ticket'] = hash("sha256", $ticket . $pair['id1'] . $pair['id2']);
+?>
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo SV_TITLE; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+</head>
+<body onload="document.getElementById('answer').size=document.getElementById('answer').value.length;">
+<div id="wrap">
+    <div id="content">
+        <?php $page = "supervisor";
+        require_once dirname(__FILE__) . '/watrixbar.phtml'; ?>
+        <h1><?php echo SV_HEADER; ?></h1>
+
+        <h2><?php echo ($pair['type'] == 1) ? SV_HEADER_2_SIM : SV_HEADER_2_SEQ; ?></h2>
+        <img src="uploads/images/<?php echo $pair[$display_order[0]]; ?>" alt="img1" title="img1"/><img
+            src="uploads/images/<?php echo $pair[$display_order[1]]; ?>" alt="img2" title="img2"/>
+
+        <div style="padding:20px;"><input id="answer" type="text" disabled="disabled" size="64"
+                                          value="<?php echo $pair['word']; ?>"></div>
+        <form method="post">
+            <input type="hidden" name="ticket" id="ticket" value="<?php echo $ticket; ?>"/>
+            <input type="hidden" name="id1" id="id1" value="<?php echo $pair['id1']; ?>"/>
+            <input type="hidden" name="id2" id="id2" value="<?php echo $pair['id2']; ?>"/>
+            <input type="hidden" name="word" id="word" value="<?php echo $pair['word']; ?>"/>
+            <input type="hidden" name="type" id="type" value="<?php echo $pair['type']; ?>"/>
+            <input type="hidden" name="group" id="group" value="<?php echo $pair['group']; ?>"/>
+            <input type="hidden" name="lang" id="lang" value="<?php echo $pair['lang']; ?>"/>
+
+            <div style="font-size:120%;padding:10px;"><?php echo SV_INPUT_1_1; ?> <span
+                    style="font-weight:bold"><?php echo SV_INPUT_1_2; ?></span> <?php echo SV_INPUT_1_3; ?></div>
+            <div style="padding:10px;"><input type="radio" name="vote" id="upvote" value="upvotes"/> <?php
+                echo SV_ANS_CLEAR; ?> <input type="radio" name="vote" id="neutralvote" value="neutralvotes"/> <?php
+                echo SV_ANS_FUZZY; ?> <input type="radio" name="vote" id="downvote" value="downvotes"/> <?php
+                echo SV_ANS_ODD; ?></div>
+            <div style="font-size:120%;padding:10px;"><?php echo SV_INPUT_2_1; ?> <span
+                    style="font-weight:bold"><?php echo SV_INPUT_2_2; ?></span> <?php echo SV_INPUT_2_3; ?></div>
+            <div style="padding:10px;"><input type="radio" name="popvote" id="pouppvote" value="popupvotes"/> <?php
+                echo SV_ANS_ORIGINAL; ?> <input type="radio" name="popvote" id="popneutralvote" value="popneutralvotes"/> <?php
+                echo SV_ANS_NVCA; ?> <input type="radio" name="popvote" id="popdownvote" value="popdownvotes"/> <?php
+                echo SV_ANS_VCA; ?></div>
+            <div style="padding:10px;"><input type="submit" id="dabutton" value="<?php echo SV_BUTTON; ?>"/></div>
+        </form>
+        <div id="results"></div>
+    </div>
+</div>
+</body>
+</html>

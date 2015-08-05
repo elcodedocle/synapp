@@ -1,0 +1,82 @@
+<?php
+// edit and save as path/to/synapp/account/{SYNAPP_CONFIG_DIRNAME}/profile_constants_constraints_defaults_and_selector_values.php
+
+$synapp_root = isset($_GET['synapproot']) ? 
+    urldecode($_GET['synapproot'])
+    :
+    realpath(
+        dirname(__FILE__).'/../../' // /../ assumes this file is in in {$synapp_root}/account/{SYNAPP_CONFIG_DIRNAME}
+    );
+$now_at_dir = getcwd();
+chdir($synapp_root);
+
+/* profile interface-related language dependent values */
+require_once dirname(__FILE__) . '/../../languages/get_browser_language.php';
+define ('SYNAPP_DEFAULT_LANGUAGE', 'eng');
+if (isset($_POST['whoami']) && ($_POST['whoami'] === "if_lang_form")) {
+    $_SESSION['if_lang'] = $_POST['if_lang'];
+} elseif (!isset($_SESSION['if_lang'])){
+    if (stripos($lang = getDefaultLanguage(), 'es') === 0) {
+        $_SESSION['if_lang'] = 'spa';
+    } elseif (stripos($lang, 'pl') === 0) {
+        $_SESSION['if_lang'] = 'pol';
+    } elseif (stripos($lang, 'en') === 0) {
+        $_SESSION['if_lang'] = 'eng';
+    } else {
+        $_SESSION['if_lang'] = SYNAPP_DEFAULT_LANGUAGE;
+    }
+}
+$langfilelang=file_exists(dirname(__FILE__).'/../../languages/'.$_SESSION['if_lang'].'/profileselectorstxt.php')?$_SESSION['if_lang']:'eng';
+/** @noinspection PhpIncludeInspection */
+require_once dirname(__FILE__).'/../../languages/'.$langfilelang.'/profileselectorstxt.php';
+
+/* profile constraints, defaults and constant values */
+
+define ("SYNAPP_ROOT", $synapp_root);
+define ("NORAINBOW_SALT", "SOMEHIGHENTROPYRANDOMPEPPER"); // LEGACY: Soft-secure password storage by concatenating this value to passwords before doing a hash sha256 of them for storage. Ignored if the more secure password_hash() method is chosen (see SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION below) 
+define ("PRENORAINBOW_TIMESTAMP","1368823477"); // DEPRECATED
+define ("PRENOPHASH_TIMESTAMP","1375183347"); // DEPRECATED
+define ("PASS_MINLENGTH", "10");
+define ("PASS_MAXLENGTH", "64");
+define ("USER_MINLENGTH", "3");
+define ("USER_MAXLENGTH", "32");
+define ("EMAIL_MAXLENGTH", "128");
+define ("LOWEST_ALLOWED_BIRTHYEAR", "1900");
+
+$types = array ("humanistic"=>array ('name'=>CONS_TYPE_0,'val'=>"humanistic"),"theoretical"=>array ('name'=>CONS_TYPE_1,'val'=>"theoretical"),
+                "applied"=>array ('name'=>CONS_TYPE_2,'val'=>"applied"),"social"=>array ('name'=>CONS_TYPE_3,'val'=>"social"),
+                "natural"=>array ('name'=>CONS_TYPE_4,'val'=>"natural"),"vocational"=>array ('name'=>CONS_TYPE_5,'val'=>"vocational"),
+                "multidisciplinar"=>array ('name'=>CONS_TYPE_6,'val'=>"multidisciplinar"));
+define ("STUDIES_TYPES_LIST", 'return '. var_export($types,1) . ';');
+$levels = array (array ('name'=>CONS_LVL_0,'val'=>"0"),array ('name'=>CONS_LVL_1,'val'=>"1"),
+                 array ('name'=>CONS_LVL_2,'val'=>"2"),array ('name'=>CONS_LVL_3,'val'=>"3"),
+                 array ('name'=>CONS_LVL_4,'val'=>"4"),array ('name'=>CONS_LVL_5,'val'=>"5"));
+define ("STUDIES_LEVELS_LIST", 'return '. var_export($levels,1) . ';');
+
+define ("MAX_AVATAR_SIZE_BYTES","296960");
+define ("MAX_AVATAR_SIZE_KBYTES",MAX_AVATAR_SIZE_BYTES/1024);
+
+define ("DEFAULT_GROUP_A", "DEFAULT_GROUP_A");
+define ("DEFAULT_GROUP_B", "DEFAULT_GROUP_B");
+
+/* Image constraints */
+
+define ("MAX_IMAGE_SIZE_BYTES","262144");
+define ("MAX_IMAGE_SIZE_KBYTES",MAX_IMAGE_SIZE_BYTES/1024);
+
+chdir($now_at_dir);
+
+/* Android app testing */
+
+define ("ANDROID_ID",'4ndr0id');
+define ("ANDROID_SALT",'hoochiecoochie');
+
+/* Secured password hash authentication */
+if (function_exists ( 'password_hash' ) && function_exists ( 'password_verify' ) && defined('PASSWORD_DEFAULT')){
+    define ('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION', true);
+    define ('SYNAPP_PASSWORD_DEFAULT', PASSWORD_DEFAULT);
+}
+
+
+
+

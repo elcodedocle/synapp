@@ -1,0 +1,57 @@
+{
+    "name": "synappv1/synapp",
+    "description": "A crowd sourcing framework for exploring and developing creative skills",
+    "keywords": ["synapp", "creativity", "uvigo", "AGH", "computational creativity",
+        "crowdsourcing", "theory of mind"],
+    "type": "application",
+    "homepage": "https://bitbucket.org/elcodedocle/synappv1",
+    "license": "MIT Expat",
+    "authors": [{
+        "name": "Gael Abadin",
+        "homepage": "https://bitbucket.org/synappv1"
+    }],
+    "repositories": [
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/bootstrap-multiselect" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/captcha" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/ckeditor" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/datatables-bootstrap"},
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/datatables-colreorder"},
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/datatables-colvis"},
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/datatables-tabletools"},
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/default-task-resources"},
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/flot" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/jquery" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/lightbox2" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/openpgpjs" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/ui-resources" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/uuid" }
+    ],
+    "require": {
+        "twbs/bootstrap": "~3.3.5",
+        "kartik-v/bootstrap-fileinput": "~4.2.3",
+        "synappv1/bootstrap-multiselect": "dev-master",
+        "synappv1/captcha": "dev-master",
+        "synappv1/ckeditor": "dev-master",
+        "datatables/datatables": "~1.10.7",
+        "synappv1/datatables-bootstrap": "dev-master",
+        "synappv1/datatables-colreorder": "dev-master",
+        "synappv1/datatables-colvis": "dev-master",
+        "synappv1/datatables-tabletools": "dev-master",
+        "synappv1/default-task-resources": "dev-master",
+        "facebook/php-sdk-v4": "~4.0.23",
+        "synappv1/flot": "dev-master",
+        "synappv1/jquery": "dev-master",
+        "synappv1/lightbox2": "dev-master",
+        "synappv1/openpgpjs": "dev-master",
+        "synappv1/ui-resources": "dev-master",
+        "synappv1/uuid": "dev-master"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.2.x-dev"
+        }
+    },
+    "config": {
+        "vendor-dir": "synapp/vendor"
+    }
+}

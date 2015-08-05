@@ -1,0 +1,148 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+require_once dirname(__FILE__) . '/account/parsers.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+if (isset($_POST['whoami'])) {
+    if ($_POST['whoami'] === "if_lang_form") {
+        $_SESSION['if_lang'] = $_POST['if_lang'];
+    }
+}
+$langfile = 'passrestxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . '/languages/get_interface_languages_list.php';
+require_once dirname(__FILE__) . '/account/passresout.php';
+require_once dirname(__FILE__) . '/account/password_restore_email.php';
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+require_once dirname(__FILE__) . '/selectors/option_list.php';
+
+$captcha = true;
+$input = "true";
+if (count($_POST)) {
+    if ($_POST['whoami'] == "accresreq_form") {
+        if (($input = trim($_POST['input'])) != '') {
+            if ($captcha = captcha_verify_word()) {
+                password_restore_email(trim($_POST['input']));
+                exit;
+            }
+        }
+    }
+}
+
+if (!count($_POST) || !isset($_SESSION['interface_languages'])) {
+
+    if (!isset($link)) {
+        $link = connect();
+    }
+    $_SESSION['interface_languages'] = get_interface_languages_list($link);
+    $link = null;
+}
+$interface_lang_options = option_list($_SESSION['interface_languages'], $_SESSION['if_lang']);
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo PR_TITLE_1 ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        #content {
+            border: 1px solid #000;
+            padding: 0 0 0 0;
+            position: relative;
+            text-align: center;
+            left: -50%;
+        }
+    </style>
+    <!--[if IE 7]>
+    <style type="text/css">
+        #wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+    <script type="text/javascript" src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+</head>
+<body>
+<div id="wrapper">
+    <div id="outer">
+        <div id="wrap">
+            <div id="content">
+                <div style="text-align:right;">
+                    <form enctype="multipart/form-data" method="POST">
+                        <input type="hidden" name="whoami" value="if_lang_form">
+                        <label>
+                            <select name="if_lang" onchange="this.form.submit()">
+                                <?php foreach ($interface_lang_options as $option) {
+                                echo $option;
+                            } ?>
+                            </select>
+                        </label>
+                    </form>
+                </div>
+                <div style="margin:20px;">
+                    <h1><?php echo PR_HEADER; ?></h1>
+
+                    <form method="POST">
+                        <input type="hidden" name="whoami" value="accresreq_form">
+                        <table style="margin:auto;">
+                            <tr>
+                                <td style='text-align:right;'><?php echo PR_INPUT ?></td>
+                                <td style='text-align:left;'><label>
+                                        <input type="text" name="input"<?php
+                                    if (isset($_POST['input'])) {
+                                        echo " value=\"" . $_POST['input'] . "\"";
+                                    }
+                                    ?>>
+                                    </label></td>
+                            </tr>
+                            <?php
+                            echo "<tr><td></td><td style='text-align:left;padding-top:20px;'><span id='captchaImage'><img style='border:0;width:60%;' src='." . SYNAPP_CAPTCHA_PATH . "/captcha.image.php?nocache=" . hash(
+                                    'sha256',
+                                    time() . mt_rand()
+                                ) . "' alt='captcha'/></span><a 
+href='#' onclick=\"updateCaptcha(null, '." . SYNAPP_CAPTCHA_PATH . "' );return false;\"><img src='.". SYNAPP_UI_RESOURCES_PATH ."/images/refresh.png' style='border:0' alt='" . PR_REFRESH . "' title='" . PR_REFRESH . "'/></a></td></tr>";
+                            echo "<tr><td style='text-align:right;'>" . PR_CAPT . "</td>";
+                            echo "<td style='text-align:left;'><input name=\"magicword\" type=\"text\" autocomplete=\"off\"/><input type='submit' value='" . PR_SEND . "'></td></tr>";
+                            ?></table>
+                        <?php
+                        if (!$input) {
+                            echo "<p style=color:red>" . PR_ERR_EMPTY . "</p>";
+                        } else {
+                            if (!$captcha) {
+                                echo "<p style=color:red>" . PR_ERR_CAPT . "</p>";
+                            }
+                        }
+                        ?>
+                    </form>
+                    <p>
+                        <a href="index.php"><?php echo PR_HOME; ?></a> - <a
+                            href="register.phtml"><?php echo PR_REG; ?></a> - <a
+                            href="faq.phtml"><?php echo PR_HELP; ?></a>
+                    </p></div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<?php
+define('BAR_FAQ', "Pomoc!");
+define('BAR_TESTS', "Testy");
+define('BAR_WEQ', "Program Word równań");
+define('BAR_ALTUSES', "Zastosowań alternatywnych");
+define('BAR_COMMPROP', "Wspólne własności");
+define('BAR_TAKE', "Podjąć");
+define('BAR_EVALUATE', "Oceny");
+define('BAR_RESULTS', "Wyniki");
+define('BAR_ASSOCIATIONS', "Stowarzyszenia");
+define('BAR_SYNAPP', "Jednoczesne");
+define('BAR_SYNAPP_FLASH', "Sekwencyjny");
+define('BAR_STATS', "Statystyka");
+define('BAR_MYACCOUNT', "Moje konto");
+define('BAR_PROFILE', "Ustawienia i profilu");
+define('BAR_LOGOUT', "Logout");
+define('BAR_CONTACT', "Kontakt");
+define('BAR_RESOURCES', "Resources");
+define('BAR_USERSANDDATA', "Users & Data");
+define('BAR_SETTINGS', "Settings");
+define('BAR_ADMFAQ', "FAQ");

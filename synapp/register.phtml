@@ -1,0 +1,178 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(
+        __FILE__
+    ) . '/account/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
+require_once dirname(__FILE__) . '/connect.php';
+$langfile = 'regtxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . '/languages/get_interface_languages_list.php';
+require_once dirname(__FILE__) . '/account/process_registration_form.php';
+require_once dirname(__FILE__) . '/account/process_login.php';
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+require_once dirname(__FILE__) . '/selectors/option_list.php';
+
+$rd['user'] = (isset($_POST['user'])) ? $_POST['user'] : "";
+$rd['pass'] = (isset($_POST['pass'])) ? $_POST['pass'] : "";
+$rd['pass2'] = (isset($_POST['pass2'])) ? $_POST['pass2'] : "";
+$rd['ilang'] = (isset($_POST['input_language'])) ? $_POST['input_language'] : $_SESSION['if_lang'];
+
+if (count($_POST)) {
+    if ($_POST['whoami'] === "reg_form") {
+        $link = connect();
+        $ea = process_registration_form($link, $rd);
+        if (!$ea['err']) {
+            if (process_login($_POST['user'], $_POST['pass'], $link)) {
+                $link = null;
+                header('Location: watrix.phtml');
+                exit;
+            }
+        }
+    }
+}
+if (!isset($ea)) {
+    $ea = array('err' => false, 'usr' => "", 'pass' => "", 'il' => "", 'capt' => "");
+}
+if (!count($_POST) || !isset($_SESSION['interface_languages'])) {
+
+    if (!isset($link)) {
+        $link = connect();
+    }
+    $_SESSION['interface_languages'] = get_interface_languages_list($link);
+
+}
+
+$link = null;
+
+$interface_lang_options = option_list($_SESSION['interface_languages'], $_SESSION['if_lang']);
+$input_lang_options = option_list($_SESSION['interface_languages'], $rd['ilang']);
+
+?><!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title><?php echo REG_TITLE ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        #content {
+            border: 1px solid #000;
+            padding: 0 0 20px 20px;
+            position: relative;
+            text-align: center;
+            left: -50%;
+        }
+    </style>
+    <!--[if IE 7]>
+    <style type="text/css">
+        #wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+    <script type="text/javascript" src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+</head>
+<body onload="document.getElementById('user').focus();">
+<div id="wrapper">
+    <div id="outer">
+        <div id="wrap">
+            <div id="content">
+                <div style="position:relative;float:right;">
+                    <form enctype="multipart/form-data" METHOD="POST" id="if_lang_form">
+                        <input type="hidden" name="whoami" value="if_lang_form">
+                        <select name="if_lang" onchange="this.form.submit()">
+                            <?php foreach ($interface_lang_options as $option) {
+                                echo $option;
+                            } ?>
+                        </select>
+                    </form>
+                </div>
+                <div style="padding:20px;"><h1><?php echo REG_HEADER ?></h1>
+
+                    <div style="text-align:left">
+                        <form enctype="multipart/form-data" method="POST" id="reg_form">
+                            <input type="hidden" name="whoami" value="reg_form"/>
+                            <input type="hidden" name="input_language" value="<?php echo $_SESSION['if_lang']; ?>"/>
+                            <table style="border-collapse: collapse; white-space: nowrap;">
+                                <tbody>
+                                <tr>
+                                    <td style="text-align:right;"><?php echo REG_USR ?></td>
+                                    <td><input type="text" name="user" id="user" value="<?php echo $rd['user']; ?>"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right;"><?php echo REG_PASS ?></td>
+                                    <td><input type="password" name="pass" value="<?php echo $rd['pass']; ?>"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right;"><?php echo REG_CPASS ?></td>
+                                    <td><input type="password" name="pass2" value="<?php echo $rd['pass2']; ?>"/></td>
+                                </tr>
+                                <!--  <tr><td style="text-align:right;"><?php echo REG_ILANG ?></td><td><select name="input_language" id="ilang" size="1">
+<?php foreach ($input_lang_options as $option) {
+                                    echo $option;
+} ?>
+</select></td></tr> -->
+                                <tr>
+                                    <td style="text-align:right;"></td>
+                                    <td><span id="captchaImage"><img style="border:0;width:60%;"
+                                                                     src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/captcha.image.php?nocache=<?php echo hash(
+                                                                         "sha256",
+                                                                         time() . mt_rand()
+                                                                     ); ?>" alt="captcha"/></span><a
+                                            href="#" onclick="updateCaptcha(null);return false;"><img
+                                                src=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/images/refresh.png" style="border:0;"
+                                                alt="<?php echo REG_REFRESH; ?>" title="<?php echo REG_REFRESH; ?>"/></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right;"><?php echo REG_CAPT ?></td>
+                                    <td><input type="text" name="magicword" autocomplete="off"/><input type="submit"
+                                                                                                       value="<?php echo REG_SEND; ?>"/>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div style="text-align:center;"><?php if ($ea['usr'] !== "") {
+                                    echo "<span style=\"color:red\">" . $ea['usr'] . "</span><br />";
+                                } ?>
+                                <?php if ($ea['pass'] !== "") {
+                                    echo "<span style=\"color:red\">" . $ea['pass'] . "</span><br />";
+                                } ?>
+                                <?php if ($ea['il'] !== "") {
+                                    echo "<span style=\"color:red\"> " . $ea['il'] . "</span><br />";
+                                } ?>
+                                <?php if ($ea['capt'] !== "") {
+                                    echo "<span style=\"color:red\">" . $ea['capt'] . "</span><br />";
+                                } ?>
+                            </div>
+                        </form>
+                        <div style="margin:0;text-align:right;"><a href="faq.phtml"><?php echo REG_HELP; ?></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

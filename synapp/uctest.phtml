@@ -1,0 +1,407 @@
+<?php
+session_start();
+if (!isset($_GET['ttype'])) {
+    die ('Unfortunate error. Guru Stack ref. 987341.a');
+}
+if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
+    header("Location: login.phtml?location=uctest.phtml" . urlencode('?ttype=' . $_GET['ttype']));
+    die();
+}
+$_SESSION['justlogged'] = false;
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+if ($_GET['ttype'] === 'utest') {
+    $langfile = 'usestxt.php';
+    $starttimefieldname = 'timer_utestb_start';
+    $endtimefieldname = 'timer_utestb_end';
+    $ttype = 'utest';
+    $ttypeid = 2;
+} elseif ($_GET['ttype'] === 'ctest') {
+    $langfile = 'commonstxt.php';
+    $starttimefieldname = 'timer_ctestb_start';
+    $endtimefieldname = 'timer_ctestb_end';
+    $ttype = 'ctest';
+    $ttypeid = 1;
+} elseif ($_GET['ttype'] === 'utesta') {
+    $langfile = 'usestxt.php';
+    $starttimefieldname = 'timer_utesta_start';
+    $endtimefieldname = 'timer_utesta_end';
+    $ttype = 'utesta';
+    $ttypeid = 2;
+} elseif ($_GET['ttype'] === 'ctesta') {
+    $langfile = 'commonstxt.php';
+    $starttimefieldname = 'timer_ctesta_start';
+    $endtimefieldname = 'timer_ctesta_end';
+    $ttype = 'ctesta';
+    $ttypeid = 1;
+}
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+$link = connect();
+
+if (isset($_SESSION['test_resource']) && isset($_SESSION['test_resource'][$ttype])){
+    $tresourceid = $_SESSION['test_resource'][$ttype]['tresourceid'];
+    $uctest_element = $_SESSION['test_resource'][$ttype]['uctest_element'];
+} else {
+    $sql = "SELECT tresourceid FROM test_timings WHERE `ttypeid` = :ttypeid AND `user` = :user AND `tresourcelang` = :lang";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':ttypeid', $ttypeid, PDO::PARAM_INT);
+    $stmt->bindValue(':user', $_SESSION['user_array']['user'], PDO::PARAM_STR);
+    $stmt->bindValue(':lang', $_SESSION['user_array']['interface_language'], PDO::PARAM_STR);
+    $stmt->execute();
+    if ($stmt->rowCount()>0){
+        $row=$stmt->fetch(PDO::FETCH_ASSOC);
+        $sql = "SELECT * FROM `vgroup_resources` WHERE `ttypeid` = :ttypeid AND `resourceid`={$row['tresourceid']} AND `groupname` = :group AND `stage` = :stage AND `tresourcelang` = :lang";
+    } else {
+        $sql = "SELECT * FROM `vgroup_resources` WHERE `ttypeid` = :ttypeid AND `groupname` = :group AND `stage` = :stage AND `tresourcelang` = :lang AND tresourcedesc IS NOT NULL AND TRIM(tresourcedesc) <> '' ORDER BY RAND() LIMIT 1 ";
+    }
+    $uctest_element = '';
+    $stage = '';
+    switch ($ttype){
+        case 'utest': $stage = 1; break;
+        case 'utesta': $stage = 2; break;
+        case 'ctest': $stage = 1; break;
+        case 'ctesta': $stage = 2; break;
+    }
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':ttypeid', $ttypeid, PDO::PARAM_INT);
+    $stmt->bindValue(':group', $_SESSION['user_array']['working_group'], PDO::PARAM_STR);
+    $stmt->bindValue(':stage', $stage, PDO::PARAM_INT);
+    $stmt->bindValue(':lang', $_SESSION['user_array']['interface_language'], PDO::PARAM_STR);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $uctest_element = '...'.strtoupper($row['tresourcedesc']);
+    $tresourceid = $row['resourceid'];
+    $_SESSION['test_resource'][$ttype]['tresourceid'] = $tresourceid;
+    $_SESSION['test_resource'][$ttype]['uctest_element'] = $uctest_element;
+}
+
+$sql = "SELECT IFNULL(" . $endtimefieldname . ",0) as endtime," . $starttimefieldname . " FROM users WHERE user = :user";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':user',$_SESSION['user_array']['user'],PDO::PARAM_STR);
+if ($stmt->execute() === false || $stmt->rowCount() < 1 || ($row = $stmt->fetch(PDO::FETCH_ASSOC)) === false) {
+    error_log("Database error: couldn't select test dates for check");
+    die("Database access error. Guru meditation: 324768423.");
+}
+if (($row['endtime'] === 0)) {
+    if (isset($_GET['start']) && (($_SESSION['user_array'][$starttimefieldname] == 0))) {
+        if ($_GET['start'] == "true") {
+            $locked = false;
+            $disabled = '';
+            $_SESSION['user_array'][$starttimefieldname] = time();
+            $_SESSION['user_array'][$endtimefieldname] = $_SESSION['user_array'][$starttimefieldname] + 15 * 60;
+            $sql = "UPDATE users SET {$starttimefieldname} = :starttime, {$endtimefieldname} = :endtime WHERE user = :user";
+            $stmt = $link->prepare($sql);
+            $stmt->bindValue(':starttime',$_SESSION['user_array'][$starttimefieldname],PDO::PARAM_INT);
+            $stmt->bindValue(':endtime',$_SESSION['user_array'][$endtimefieldname],PDO::PARAM_INT);
+            $stmt->bindValue(':user',$_SESSION['user_array']['user'],PDO::PARAM_STR);
+            if ($stmt->execute()===false) {
+                die (var_export($link->errorInfo(), true));
+            }
+            $sql = "INSERT INTO test_timings (ttypeid, tresourceid, tresourcelang, user, time_given, start_time, end_time) VALUES (:ttypeid, :tresourceid,  :lang,  :user, 900, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL 900 SECOND)";
+            $stmt = $link->prepare($sql);
+            $stmt->bindValue(':ttypeid',$ttypeid,PDO::PARAM_INT);
+            $stmt->bindValue(':tresourceid',$tresourceid,PDO::PARAM_INT);
+            $stmt->bindValue(':lang',$_SESSION['if_lang'],PDO::PARAM_STR);
+            $stmt->bindValue(':user',$_SESSION['user_array']['user'],PDO::PARAM_STR);
+            if ($stmt->execute()===false) {
+                error_log (var_export($link->errorInfo(), true));
+            }
+        } else {
+            header("Location: test/start_dtest_counter.php?ttype=" . $ttype);
+            die();
+        }
+    } else {
+        header("Location: test/start_dtest_counter.php?ttype=" . $ttype);
+        die();
+    }
+} else {
+    if (($row[$starttimefieldname] > 0) && ((time() - $row['endtime']) > 0)) {
+        $locked = true;
+        $disabled = 'disabled';
+    } else {
+        $locked = false;
+        $disabled = '';
+    }
+}
+
+$sql = "SELECT * FROM `test_results` WHERE `user` = :user AND `lang` = :lang AND `ttypeid` = :ttypeid AND `tresourceid` = :tresourceid ORDER BY `firstedit`";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':user',$_SESSION['user_array']['user'], PDO::PARAM_STR);
+$stmt->bindValue(':lang',$_SESSION['if_lang'], PDO::PARAM_STR);
+$stmt->bindValue(':ttypeid',$ttypeid, PDO::PARAM_INT);
+$stmt->bindValue(':tresourceid',$tresourceid, PDO::PARAM_INT);
+$stmt->execute();
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $utest_user[$row['resultid']] = $row['val'];
+}
+$lastid = 0;
+$link = null;
+?><!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>
+        <?php echo UCTEST_TITLE; ?>
+    </title>
+    <script type="text/javascript">
+        var bLock = false
+            , actOnBlur = true
+            , focused = false
+            , lastFocusedId = ''
+            , lastCount = 0
+            , counter = (15 * 60 -<?php echo time()-$_SESSION['user_array'][$starttimefieldname]; ?>)
+            , locked =<?php echo $locked?"true":"false"; ?>
+            , lastid =<?php echo $lastid; ?>
+            , newIdsMap = {};
+        function sendToServer(did) {
+            var xmlhttp
+                , restoreFocus
+                , bNew = typeof did === 'string' && did.indexOf('new') === 0
+                , sendId
+                , val = bLock ? 'lock' : document.getElementById(did + 'e').value
+                , words = '&words=' + val
+                , ttype = '&ttype=<?php echo $ttype;?>'
+                , sLock = bLock ? "true" : "false";
+            
+            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            } else {// code for IE6, IE5
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    if (xmlhttp.responseText === "<?php echo UCTEST_REJECTED_REQUEST; ?>") {
+                        locked = true;
+                        document.getElementById('lockButton').disabled = 'disabled';
+                    }
+                    if (xmlhttp.responseText !== '') {
+                        if (/^(\-|\+)?([0-9]+|Infinity)$/.test(xmlhttp.responseText)){
+                            if (bNew){
+                                newIdsMap[did] = xmlhttp.responseText;
+                            }
+                            return;
+                        }
+                        restoreFocus = focused;
+                        if (restoreFocus) {
+                            actOnBlur = false;
+                        }
+                        alert(xmlhttp.responseText);
+                        if (restoreFocus) {
+                            document.getElementById(lastFocusedId + 'e').focus();
+                            actOnBlur = true;
+                        }
+                    }
+                }
+            };
+
+            xmlhttp.open("POST", "test/set_result.php", true);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            sendId = bNew && newIdsMap.hasOwnProperty(did) ? newIdsMap[did]:did;
+            xmlhttp.send("bLock=" + sLock + "&did=" + sendId + words + ttype + '&ttypeid=<?php echo $ttypeid; ?>' + '&tresourceid=<?php echo $tresourceid; ?>');
+            if (val == '') {
+                removeRow(did);
+            }
+        }
+        function trim(str) {
+            return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+        }
+        function displayEditInputsWithId(id) {
+            if (locked) {
+                alert("<?php echo UCTEST_ALERT_LOCKED; ?>");
+                return false;
+            }
+            if (document.getElementById(id + 'tde').style.display == 'none') {
+                /* enter edit mode for selected id */
+                document.getElementById(id + 'td').style.display = 'none';
+                document.getElementById(id + 'tde').style.display = 'inline';
+                document.getElementById(id + 'e').focus();
+                document.getElementById(id + 'e').select();
+                return true;
+            }
+            return false;
+        }
+        function saveAndHideEditInputsWithId(id) {
+            /* leave edit mode */
+            if ((!focused) || (lastFocusedId !== id)) {
+                var bSend = false;
+                document.getElementById(id + 'e').value = trim(document.getElementById(id + 'e').value);
+                var previousInput = document.getElementById(id).innerHTML;
+                document.getElementById(id).innerHTML = document.getElementById(id + 'e').value;
+                if (previousInput !== document.getElementById(id).innerHTML) bSend = true;
+                document.getElementById(id + 'td').style.display = 'inline';
+                document.getElementById(id + 'tde').style.display = 'none';
+                if (bSend) sendToServer(id);
+            }
+        }
+        function onInputFocus(id) {
+            focused = true;
+            lastFocusedId = id;
+        }
+        function onInputBlur(id) {
+            focused = false;
+            if (actOnBlur) {
+                setTimeout("saveAndHideEditInputsWithId('" + id + "')", 150);
+            }
+        }
+        function blockButton() {
+            if (!bLock) {
+                bLock = confirm("<?php echo UCTEST_CONFIRM_LOCK; ?>");
+            }
+            if (bLock) {
+                locked = true;
+                document.getElementById('lockButton').disabled = 'disabled';
+                document.getElementById('message').disabled = 'disabled';
+                sendToServer('0');
+            }
+        }
+        function setButton() {
+            if (!locked) {
+                document.getElementById('lockButton').value = "<?php echo UCTEST_SAVE_BUTTON_A; ?>" + counter + "<?php 
+        echo UCTEST_SAVE_BUTTON_B; ?>";
+            } else {
+                document.getElementById('lockButton').value = "<?php echo UCTEST_SAVED_BUTTON; ?>";
+                document.getElementById('lockButton').disabled = "disabled";
+            }
+        }
+        function refreshCounter() {
+            if ((counter > 0) && (!locked)) {
+                counter--;
+                setTimeout('refreshCounter()', 1000);
+                setButton();
+            } else {
+                if (!locked) {
+                    bLock = true;
+                    blockButton();
+                }
+            }
+        }
+        function stopRKey(evt) {
+            var node;
+            evt = (evt) ? evt : ((event) ? event : null);
+            node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+            if ((evt.keyCode == 13) && (node.type == "text")) {
+                if (node.id == "message") {
+                    process_message();
+                } else {
+                    onInputBlur(lastFocusedId);
+                }
+                return false;
+            }
+            if ((evt.keyCode == 27) && (node.type == "text") && (node.id != 'message')) {
+                document.getElementById(lastFocusedId + 'e').value = document.getElementById(lastFocusedId).innerHTML;
+                onInputBlur(lastFocusedId);
+            }
+            return true;
+        }
+        document.onkeypress = stopRKey;
+        function process_message() {
+            var message = document.getElementById('message');
+            if ((message != "<?php echo UCTEST_WRITEHERE; ?>") && (message != '')) {
+                appendRow();
+                message.value = '';
+                sendToServer('new'+lastid);
+            }
+        }
+        function appendRow() {
+            lastid++;
+            var id = lastid;
+            var val = trim(document.getElementById('message').value);
+            var newRow = document.createElement('tr');
+            newRow.innerHTML = "<td id=\"new" + id + "td\" style=\"display:inline;\" onclick=\"displayEditInputsWithId('new" + id + "');\">" +
+                "<span id=\"new" + id + "\">" + val + "</span>" + "</td>" +
+                "<td id=\"new" + id + "tde\" style=\"display:none;\">" +
+                "<input id=\"new" + id + "e\" name=\"new" + id + "e\" type=\"text\" value=\"" + val + "\" autocomplete=\"off\" size=\"" + val.length +
+                "\" onfocus=\"setTimeout('onInputFocus(\\'new" + id + "\\')',50);\" onblur=\"onInputBlur('new" + id + "');\">" +
+                "</td>";
+            document.getElementById('bottomRow').parentNode.insertBefore(newRow, document.getElementById('bottomRow'));
+        }
+        function removeRow(id) {
+            document.getElementById(id + 'td').parentNode.parentNode.removeChild(document.getElementById(id + 'td').parentNode);
+            //renumber rows
+        }
+    </script>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+</head>
+<body onload="refreshCounter();">
+<div id="wrap">
+    <div id="content">
+        <?php $page = $ttype;
+        require_once dirname(__FILE__) . '/watrixbar.phtml'; ?>
+        <h1>
+            <?php echo UCTEST_HEADER; ?>
+        </h1>
+
+        <h2>
+            <?php echo UCTEST_HEADER_2; ?>
+        </h2>
+
+        <p><?php echo UCTEST_INSTRUCTIONS; ?></p>
+
+        <p style="font-weight: bold;"><?php echo $uctest_element; ?></p>
+
+        <p style="margin:auto;max-width:720px;font-style:italic;font-size:small"><?php echo UCTEST_INSTRUCTIONS_2_1; ?></p><p style="margin:auto;max-width:720px;font-style:italic;font-size:small"><?php
+            echo UCTEST_INSTRUCTIONS_2_2; ?> <?php echo UCTEST_INSTRUCTIONS_2_3; ?></p>
+
+        <form>
+            <div style="padding:5px 0;">
+                <table style="margin: auto">
+                    <?php if (isset($utest_user)) {
+                        foreach ($utest_user as $did => $d) {
+                            echo "<tr>" . PHP_EOL;
+                            echo "<td id=\"" . $did . "td\" style=\"display:inline;\" onclick=\"displayEditInputsWithId('" . $did . "');\">" . PHP_EOL;
+                            echo "<span id=\"" . $did . "\">";
+                            echo $utest_user[$did];
+                            echo "</span>";
+                            echo "</td>" . PHP_EOL;
+                            echo "<td id=\"" . $did . "tde\" style=\"display:none;\">" . PHP_EOL;
+                            echo "<input id=\"" . $did . "e\" name=\"" . $did . "e\" type=\"text\" value=\"" . $utest_user[$did] . "\" autocomplete=\"off\" 
+    size=\"" . strlen(
+                                    $d
+                                ) . "\" onfocus=\"setTimeout('onInputFocus(\\'" . $did . "\\')',50);\" onblur=\"onInputBlur('" . $did . "');\">";
+                            echo "</td>" . PHP_EOL;
+                            echo "</tr>" . PHP_EOL;
+                        }
+                    }
+                    ?>
+                    <tr id="bottomRow">
+                        <td><input type="text" autocomplete="off" onfocus="if (this.value==='<?php
+                            echo UCTEST_WRITEHERE;?>') { this.value=''; }"
+                                   onblur="if (trim(this.value)==='') { this.value='<?php
+                                   echo UCTEST_WRITEHERE;?>'; }" id="message" name="message" size="50" <?php
+                            echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>
+                                   value="<?php echo UCTEST_WRITEHERE; ?>"></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            <div style="padding:5px 0;"><input type="button" onclick="blockButton();" id="lockButton" value="<?php
+                echo $disabled === "disabled" ? UCTEST_SAVED_BUTTON : UCTEST_SAVE_BUTTON; ?>" <?php
+                echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>/></div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+if ((!isset($_SESSION['auth']) || $_SESSION['auth'] !== true ) && ( !isset($_SESSION['adm']) || $_SESSION['adm'] !== true ) ) {
+    header("Location: login.phtml?location=contact.phtml");
+    die();
+}
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'contacttxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
+require_once dirname(__FILE__) . '/account/notify_no_mail.php';
+
+$disabled = "";
+$usubject = "";
+$umessage = CON_WRITEHERE;
+if (count($_POST)) {
+    $usubject = $_POST['subject'];
+    $umessage = $_POST['message'];
+    if (captcha_verify_word()) {
+        if (strlen($_POST['subject']) > 78) {
+            $err = true;
+            $errtxt = CON_SUBJ_OVS_ERR;
+        } elseif (strlen($_POST['message']) > 15000) {
+            $err = true;
+            $errtxt = CON_MSG_OVS_ERR;
+        } else {
+            /* Mail the message */
+            $to = "root";
+            $subject = "Message from user " . $_SESSION['user_array']['user'];
+            $message = "Subject: " . $_POST['subject'] . PHP_EOL . PHP_EOL . $_POST['message'];
+            notify_no_mail();
+            mail($to, $subject, $message);
+            $disabled = "disabled";
+            $err = false;
+        }
+    } else {
+        $err = true;
+        $errtxt = CON_CAPT_ERR;
+    }
+} else {
+    $err = false;
+}
+?>
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo CON_TITLE; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src=".<?php echo SYNAPP_CAPTCHA_PATH; ?>/js/updateCaptcha.js"></script>
+    <script type="text/javascript">
+        function stopRKey(evt) {
+            var node;
+            evt = (evt) ? evt : ((event) ? event : null);
+            node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null);
+            return !((evt.keyCode == 13) && (node.type == "text"));
+        }
+        document.onkeypress = stopRKey;
+    </script>
+</head>
+<body>
+<div id="wrap">
+    <div id="content">
+        <?php $page = "contact";
+        require_once dirname(__FILE__) . '/watrixbar.phtml'; ?>
+        <h1><?php echo CON_HEADER; ?></h1>
+
+        <div style="margin:auto; width:425px;">
+            <form method="post">
+                <div style="padding:5px 0;"><?php echo CON_SUBJECT; ?><input type="text" size="50" name="subject"
+                                                                             value="<?php echo $usubject; ?>" <?php echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>/>
+                </div>
+                <div style="padding:5px 0;"><textarea
+                        onfocus="if (this.value==='<?php echo CON_WRITEHERE; ?>') { this.value=''; }"
+                        onblur="if (this.value==='') { this.value='<?php echo CON_WRITEHERE; ?>'; }" name="message"
+                        cols="50"
+                        rows="25" <?php echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>><?php echo $umessage; ?></textarea>
+                </div>
+                <?php if ($disabled !== "disabled") {
+                    echo "<div style=\"border:0;margin:0px;padding:0px 0px 0px 0px;text-align:center;\"><span id=\"captchaImage\"><img style=\"width:40%;\" 
+    src=\"." . SYNAPP_CAPTCHA_PATH . "/captcha.image.php?nocache=" . hash("sha256", time() . mt_rand()) . "\" alt=\"captcha\"/></span><a 
+href=\"#\" onclick=\"updateCaptcha(null, '." . SYNAPP_CAPTCHA_PATH ."' );return false;\"><img src=\".". SYNAPP_UI_RESOURCES_PATH ."/images/refresh.png\" style=\"border:0\" alt=\"" . CON_REFRESH . "\" title=\"" . CON_REFRESH . "\"/></a></div>";
+                    echo "<div style=\"margin:0px;padding:0px 0px 0px 0px;text-align:center;\">" . CON_CAPT . "<input type=\"text\" id=\"magicword\" name=\"magicword\" autocomplete=\"off\"/></div>";
+                    if ($err) {
+                        echo "<div id='err' style=\"padding:5px 0px;text-align:center;\"><span style=\"color:red\">" . (isset($errtxt) ? $errtxt : '') . "</span></div>";
+                    }
+                }?>
+                <div style="padding:5px 0;text-align:right;"><input type="submit" id="dabutton"
+                                                                    value="<?php echo $disabled === "disabled" ? CON_BUTTON_SENT : CON_BUTTON_SEND; ?>" <?php echo $disabled === "disabled" ? "disabled='disabled'" : "" ?>/>
+                </div>
+            </form>
+        </div>
+        <?php if ($disabled === "disabled") {
+            echo "<div><p>" . CON_MSG_SENT . "</p><p>" . CON_SENDAGAIN_1 . " <a href=\"contact.phtml\">" . CON_SENDAGAIN_2 . "</a> " . CON_SENDAGAIN_3 . "</p></div>";
+        } ?>
+        <div><p style="font-style:italic"><?php echo CON_TRY_ISSUE_TRACKER; ?><a href="<?php echo SYNAPP_ISSUE_TRACKER_URL; ?>" target="_blank"><?php echo CON_ISSUE_TRACKER; ?></a><?php echo CON_ISSUE_TRACKER_2; ?></p></div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<?php
+define('UCTEST_TITLE', "Synapp - Test de propiedad en común");
+define('UCTEST_REJECTED_REQUEST', "Solicitud rechazada: El test está bloqueado.");
+define('UCTEST_HEADER', "Test de propiedad en común");
+define('UCTEST_HEADER_2', "Basado en el trabajo de M. A. Wallach &amp; N. Kogan");
+define('UCTEST_INSTRUCTIONS', "Instrucciones: Escriba debajo tantas cosas como se le ocurran que tengan...");
+define('UCTEST_INSTRUCTIONS_2_1', "El test se bloqueará automáticamente en 15 minutos o cuando presione el botón de bloquear en la parte inferior.");
+define('UCTEST_INSTRUCTIONS_2_2', "Mientras tanto puede añadir nuevas respuestas empleando el recuadro de entrada de texto (Escriba su respuesta en él, después presione la tecla INTRO)");
+define('UCTEST_INSTRUCTIONS_2_3', "o editar las existentes haciendo clic sobre ellas.");
+define('UCTEST_SAVE_BUTTON', "bloquear respuestas (finalizar)");
+define('UCTEST_SAVE_BUTTON_A', "bloquear respuestas y finalizar (");
+define('UCTEST_SAVE_BUTTON_B', " segundos para auto-bloqueo)");
+define('UCTEST_SAVED_BUTTON', "Test bloqueado.");
+define('UCTEST_ALERT_LOCKED', "Este test está bloqueado, no se le permite hacer ningún cambio en sus respuestas.");
+define('UCTEST_ALERT_WAIT', "\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tEste test está bloqueado.\\n\\nLe será permitido acceder a el una vez complete los juegos de asociaciones secuencial y simultánea.");
+define('UCTEST_START_COUNTER_TITLE', "Synapp - ¿Comenzar el test ahora?");
+define('UCTEST_CONFIRM_CONTINUE', "Este test de creatividad toma un tiempo máximo de 15 y solamente puede ser resuelto una vez. ¿Desea comenzarlo ahora?");
+define('UCTEST_CONFIRM_CONTINUE_BEFORE', "Antes de comenzar a usar la aplicación se le presentará un conjunto de 3 test, que otros usuarios evaluarán.\\n\\nSus resultados servirán para establecer sus habilidades creativas previas al uso de la aplicación y permitirán compararlos con los obtenidos\\ntras finalizar el experimento.\\n\\n\\t\\t\\t\\t\\t\\t Desea realizar el TERCERO DE ELLOS AHORA?\\n\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t(duración de 0 a 15 minutos)");
+define('UCTEST_CONFIRM_LOCK', "¿Está seguro de que desea bloquear el test? ¡No podrá hacer ningún cambio en sus respuestas!");
+define('UCTEST_WRITEHERE', "Escriba aqui una respuesta y presione ENTER");

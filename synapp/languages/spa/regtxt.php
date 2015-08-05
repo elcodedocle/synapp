@@ -1,0 +1,58 @@
+<?php
+define('REG_ERR_0', "");
+define('REG_ERR_USR_1', "Error: Debe seleccionar un nombre de usuario.");
+define('REG_ERR_USR_2', "Error: Nombre de usuario < " . USER_MINLENGTH . " car.");
+define('REG_ERR_USR_3', "Error: Nombre de usuario > " . USER_MAXLENGTH . " car.");
+define('REG_ERR_USR_4', "Error: Solo cadenas de caracteres alfanumericos separadas por \".\" o \"_\" son permitidas como nombre de usuario.");
+define('REG_ERR_USR_5', "Error: El usuario ya existe. Por favor seleccione otro nombre de usuario.");
+define('REG_ERR_PASS_1', "Error: Usuario = password. Por favor seleccione un password distinto.");
+define('REG_ERR_PASS_2', "Error: Debe proporcionar un password.");
+define('REG_ERR_PASS_3', "Error: Longitud del password < " . PASS_MINLENGTH . " car.");
+define('REG_ERR_PASS_4', "Error: Longitud del password > " . PASS_MAXLENGTH . " car.");
+define('REG_ERR_PASS_5', "Error: Solo cadenas de caracteres alfanumericos separadas por \".\" o \"_\" son permitidas como password.");
+define('REG_ERR_PASS_6', "Error: Los passwords no coinciden.");
+define('REG_ERR_ILANG', "Error: Por favor seleccione un lenguaje de entrada.");
+define('REG_ERR_GENDER', "Error: Por favor seleccione sexo.");
+define('REG_ERR_BDATEY', "Error: Please introduzca fecha de nacimiento (año).");
+define('REG_ERR_BDATEM', "Error: Por favor introduzca fecha de nacimiento (mes).");
+define('REG_ERR_ST', "Error: Please introduzca formacion.");
+define('REG_ERR_STT', "Error: Please introduzca tipo de formacion.");
+define('REG_ERR_LVL', "Error: Please introduzca nivel de formacion.");
+define('REG_ERR_OCC', "Error: Please introduzca ocupacion.");
+define('REG_ERR_MAIL_1', "Error: email > " . EMAIL_MAXLENGTH . " car.");
+define('REG_ERR_MAIL_2', "Error: direccion de email no valida.");
+define('REG_ERR_AV_1', "Avatar Error.");
+define('REG_ERR_AV_2', "Avatar Error: MAX " . MAX_AVATAR_SIZE_KBYTES . "KB, gif/png/jpeg.");
+define('REG_ERR_CAPT', "Captcha incorrecto. Por favor intentelo de nuevo.");
+define('REG_ERR_MAIL_3', "Error: Su direccion de correo ya esta asociada con una cuenta SynAPP. Por favor introduzca otra direccion.");
+
+define('REG_TITLE', "SynAPP - Formulario de registro");
+define('REG_HEADER', "SynAPP - Formulario de registro");
+define('REG_USR', "Usuario:");
+define('REG_PASS', "Password:");
+define('REG_CPASS', "Confirmar Password:");
+define('REG_HIDE_PROFILE', "Ocultar perfil a otros usuarios.");
+define('REG_ILANG', "Lenguaje de ENTRADA:");
+define('REG_PROFILE', "Perfil:");
+define('REG_GENDER', "Sexo:");
+define('REG_MALE', "Masculino");
+define('REG_FEMALE', "Femenino");
+define('REG_BIRTHDATE', "Fecha de Nacimiento (YYYY/MM):");
+define('REG_FORMATION', "Formacion Academica:");
+define('REG_FORMATION_LEVEL', "Tipo y Nivel de Formacion Academica:");
+define('REG_OCCUPATION', "Ocupacion:");
+define('REG_MAIL', "e-mail (opcional):");
+define('REG_AVATAR', "Avatar (opcional):");
+define('REG_CAPT', "Captcha:");
+define('REG_SEND', "Enviar");
+
+define('REG_REFRESH', "Clique aqui para cargar un nuevo captcha.");
+define('REG_WHYEMAIL', "¿Por que debo proporcionar mi direccion de email?");
+define('REG_WHYEMAILMORE', "Se recomienda que proporcione una direccion de email unicamente con propositos administrativos (Recuperacin de password, etc.).\\n\\nPuesto que la privacidad y seguridad de nuestros sistemas no es realmente muy buena (Ni particularmente peor que la de cualquier otro) por estar actualmente en fase de pruebas y almacenados en servidores de terceros, se recomienda que proporcione una direccion de email secundaria que pueda tener para registros en foros y otras actividades que la puedan exponer a ingentes cantidades de correo basura, y a la que pueda tener acceso en caso de necesitarlo a causa de los susodichos procesos de gestion de su cuenta en Synapp.");
+define('REG_SHOWALL', "Mostrar lista completa");
+define('REG_HIDEALL', "Ocultar lista completa");
+define('REG_ALLLANGSORDEREDBYINTCODE', "Todos los lenguajes ordenados por codigo internacional");
+define('REG_ALLSTUDIES', "Encuentre sus estudios aqui o escribalos en el campo superior si no estan en la lista");
+define('REG_ALLOCCUPATIONS', "Encuentre su ocupacion actual aqui o escribala en el campo superior si no esta en la lista");
+
+define('REG_HELP', "Ayuda / Sobre SynAPP");

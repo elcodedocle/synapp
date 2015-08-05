@@ -1,0 +1,24 @@
+<?php
+define('ST_TITLE1', "SynAPP- ");
+define('ST_TITLE2', "przez statystyki");
+define('ST_HEADER', "SynAPP statystyki dla użytkownika ");
+define('ST_SCATTERDIAGRAM', "WYKRES PUNKTOWY DIAGRAM");
+define('ST_HISTOGRAM', "CHRONOLOGIC STATS DZIENNIE");
+define('ST_TANSWERSTABLE', "TABELA ODPOWIEDZI");
+define('ST_TANSWER', "ODPOWIEDŹ");
+define('ST_TTYPE', "TYP");
+define('ST_TPOINTS', "PUNKTY");
+define('ST_TUND', "UND");
+define('ST_TCRE', "CRE");
+define('ST_TFULLVOTES', "Pełne głosów");
+define('ST_THALFVOTES', "Połowę głosów");
+define('ST_TZEROVOTES', "Zera głosów");
+define('ST_TTIMEOFASSOC', "Czas stowarzyszenia");
+define('ST_SCATTERXAXISLABEL', "Oryginalności");
+define('ST_SCATTERYAXISLABEL', "Uznanie");
+define('ST_SCATTERANSWER', "Odpowiedź");
+define('ST_SCATTERFLASHANSWER', "Program Flash odpowiedzi");
+define('ST_HISTRECOTHERSLAB', "-Uznanie, (inne)");
+define('ST_HISTORGOTHERSLAB', "Oryginalności, (inne)");
+define('ST_HISTRECYOULAB', "-Uznanie, (użytkownik)");
+define('ST_HISTORGYOULAB', "Oryginalności, (użytkownik)");

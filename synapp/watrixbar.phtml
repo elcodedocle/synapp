@@ -1,0 +1,140 @@
+<?php
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'bartxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+$page = (isset($page)) ? $page : "";
+$bAdm = isset($_SESSION['adm']);
+
+if (!isset($contextPath)){
+    $contextPath='';
+}
+?>
+<?php if ($page !== "stats" && $page !== 'test_results'  && !$bAdm || $page==='contact' || $page === 'profile') :?>
+    <script type="text/javascript" src="<?php echo $contextPath; ?>.<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+<?php endif; ?>
+<script type="text/javascript">
+    function mainmenu() {
+        $(" #nav ul ").css({display: "none"});
+        $(" #nav li").hover(function () {
+            $(this).find('ul:first:hidden').css({visibility: "visible", display: "none"}).slideDown(400);
+        }, function () {
+            $(this).find('ul:first').slideUp(0);
+        });
+    }
+    $(document).ready(function () {
+        mainmenu();
+        $('#menu').width(Math.max(500,310+$('#elasticli').width()))
+    });
+</script>
+<div id="menu">
+    <nav>
+        <ul id="nav">
+            <?php if (!$bAdm): ?>
+                <li<?php if ($page === "faq") {
+                    echo " class='disabled'";
+                }
+                ?>><a href="faq.phtml"><?php echo BAR_FAQ; ?></a></li>
+                <li><a href="#" onclick="return false;"><?php echo BAR_TESTS; ?></a>
+                    <ul class="submenu">
+                        <li<?php if ($page === "ditloids_test") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="test_will_shortz_morgan_worthy_ditloid.phtml"><?php echo BAR_WEQ; ?></a></li>
+                        <li<?php if ($page === "utest") {
+                            echo " class='disabled'";
+                        }
+                        ?>>
+                            <a href="uctest.phtml?ttype=utest<?php echo $_SESSION['user_array']['gotestafter'] == '1' ? 'a' : ''; ?>"><?php echo BAR_ALTUSES; ?></a>
+                        </li>
+                        <li<?php if ($page === "ctest") {
+                            echo " class='disabled'";
+                        }
+                        ?>>
+                            <a href="uctest.phtml?ttype=ctest<?php echo $_SESSION['user_array']['gotestafter'] == '1' ? 'a' : ''; ?>"><?php echo BAR_COMMPROP; ?></a>
+                        </li>
+                        <li<?php if ($page === "test_evaluator") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="test_evaluator.phtml"><?php echo BAR_EVALUATE; ?></a></li>
+                        <li<?php if ($page === "test_results") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="test_results.phtml"><?php echo BAR_RESULTS; ?></a></li>
+                    </ul>
+                </li>
+                <li><a href="#" onclick="return false;"><?php echo BAR_ASSOCIATIONS; ?></a>
+                    <ul class="submenu">
+                        <li<?php if ($page === "watrix") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="watrix.phtml"><?php echo BAR_SYNAPP; ?></a></li>
+                        <li<?php if ($page === "watrix_flash") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="watrix_flash.phtml"><?php echo BAR_SYNAPP_FLASH; ?></a></li>
+                        <li<?php if ($page === "supervisor") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="supervisor.phtml"><?php echo BAR_EVALUATE; ?></a></li>
+                        <li<?php if (($page === "stats") && ((isset($_GET['user'])) ? ($_GET['user'] === $_SESSION['user_array']['user']) : true)) {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="stats.phtml"><?php echo BAR_STATS; ?></a></li>
+                    </ul>
+                </li>
+                <li id="elasticli"><a href="#" onclick="return false;"><?php echo BAR_MYACCOUNT; ?>
+                        (<?php echo $_SESSION['user_array']['user']; ?>)</a>
+                    <ul class="submenu">
+                        <li<?php if (($page === "profile") && (isset($_GET['user']) ? $_GET['user'] === $_SESSION['user_array']['user'] : true)) {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="profile.phtml"><?php echo BAR_PROFILE; ?></a></li>
+                        <li><a href="account/logout.php"><?php echo BAR_LOGOUT; ?></a></li>
+                    </ul>
+                </li>
+                <li<?php if ($page === "contact") {
+                    echo " class='disabled'";
+                }
+                ?>><a href="contact.phtml"><?php echo BAR_CONTACT; ?></a></li>
+            <?php elseif ($bAdm): ?>
+
+
+                <li<?php if ($page === "faq") {
+                    echo " class='disabled'";
+                }
+                ?>><a href="<?php echo $contextPath; ?>faq.phtml"><?php echo BAR_ADMFAQ; ?></a></li>
+                <li<?php if ($page === "admresources") {
+                    echo " class='disabled'";
+                }
+                ?>><a href="<?php echo $contextPath; ?>admin/admresources.phtml"><?php echo BAR_RESOURCES; ?></a></li>
+                <li<?php if ($page === "admusers") {
+                    echo " class='disabled'";
+                }
+                ?>><a href="<?php echo $contextPath; ?>admin/admusers.phtml"><?php echo BAR_USERSANDDATA; ?></a></li>
+                <li id="elasticli"><a href="#" onclick="return false;"><?php echo BAR_MYACCOUNT; ?>
+                        (<?php echo "Gael"; ?>)</a>
+                    <ul class="submenu">
+                        <li<?php if ($page === "admsettings") {
+                            echo " class='disabled'";
+                        }
+                        ?>><a href="<?php echo $contextPath; ?>admin/admsettings.phtml"><?php echo BAR_SETTINGS; ?></a></li>
+                        <li><a href="<?php echo $contextPath; ?>admin/account/admlogout.php"><?php echo BAR_LOGOUT; ?></a></li>
+                    </ul>
+                </li>
+                <li<?php if ($page === "contact") {
+                    echo " class='disabled'";
+                }
+                ?>><a href="<?php echo $contextPath; ?>contact.phtml"><?php echo BAR_CONTACT; ?></a></li>
+            <?php endif; ?>
+            
+        </ul>
+    </nav>
+</div><br/>

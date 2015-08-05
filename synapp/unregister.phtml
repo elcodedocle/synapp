@@ -1,0 +1,175 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/connect.php';
+if (isset($_GET['code'])) {
+    $_SESSION['code'] = $_GET['code'];
+    if ((!isset($_GET['user'])) && (!isset($_SESSION['user']))) {
+        header('Location: login.phtml');
+    }
+    if (!isset($_SESSION['user'])) {
+        $_SESSION['user'] = $_GET['user'];
+        $link = connect();
+        $sql = "SELECT interface_language FROM users WHERE user = :user";
+        $stmt = $link->prepare($sql);
+        $stmt->bindValue(':user',$_SESSION['user'],PDO::PARAM_STR);
+        $stmt->execute();
+        $lrow = $stmt->fetch(PDO::FETCH_ASSOC);
+        $_SESSION['if_lang'] = $lrow['interface_language'];
+        $link = null;
+    }
+} else {
+    if (!isset($_SESSION['user'])) {
+        header('Location: login.phtml');
+    }
+}
+require_once dirname(__FILE__) . '/account/process_login.php';
+/** @noinspection PhpIncludeInspection */
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH;
+require_once dirname(__FILE__) . '/account/unregout.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'unregtxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+$link = connect();
+$user = $_SESSION['user'];
+$sql = "SELECT email,recovery FROM users WHERE user = :user";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':user',$user,PDO::PARAM_STR);
+$stmt->execute();
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$_SESSION['nomail'] = ($row['email'] === "") ? true : false;
+if (count($_POST)) {
+    if (process_login($user, $_POST['pass'], $link, true)) {
+        /* 
+        
+            ATTENTION!!! 
+        
+            IF SYNAPP_DELETE_DATA_ON_UNREGISTER IS SET TO true
+        
+            THE USER ENTRY ON users WILL BE DELETED AND IT WILL 
+        
+            CASCADE, DELETING ALL USER DATA ON OTHER TABLES 
+        
+        */
+        $bRecovery = isset($_SESSION['code']) ? ((hash(
+                "sha256",
+                $_SESSION['code']
+            ) === $row['recovery']) ? true : false) : false;
+        if (($row['email'] === "") || $bRecovery) {
+            
+            if (SYNAPP_DELETE_DATA_ON_UNREGISTER !== true){
+                
+                // we hash the hashed password so it does not work anymore on 
+                // regular login, but it can still be used on a 
+                // "reactivate account" form if we want
+                $voidedPass = hash('sha256',$_SESSION['user_array']['pass']);
+                $sql = "UPDATE users SET active = 0, pass = {$voidedPass} WHERE user = :user";
+                
+            } else {
+                
+                // it will cascade to all entries with foreign keys pointing to that row
+                $sql = "DELETE FROM users WHERE user = :user";
+                
+            }
+            
+            $stmt = $link->prepare($sql);
+            $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+            if ($stmt->execute() === false) {
+                die('Error: ' . var_export($link->errorInfo(), true));
+            }
+            
+            header('Location:' . "logout.php?close=true");
+            exit;
+            
+        } else {
+            if ($row['email'] !== "") {
+                if (!isset($_SESSION['code'])) {
+                    $code = mt_rand(); //recovery
+                    $sql = "UPDATE users SET recovery='" . hash("sha256", $code) . "' WHERE user=:user";
+                    $stmt = $link->prepare($sql);
+                    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+                    $stmt->execute();
+                    $to = $row['email'];
+                    $subject = unregout('subject', $user);
+                    $mime_boundary = hash("sha256", time());
+                    $msg = unregout('email', $user, $row['email'], $code, $mime_boundary);
+                    $headers = unregout('headers', $mime_boundary);
+                    mail($to, $subject, $msg, $headers);
+                    echo unregout('urmailsenttouser', $user);
+                    exit;
+                } else {
+                    $_SESSION['login_err'] = 2;
+                }
+            }
+        }
+    }
+}
+$link = null;
+
+if (!isset($_SESSION['user_count'])) {
+    $_SESSION['user_count'] = 1;
+}
+if (!isset($_SESSION['pass_count'])) {
+    $_SESSION['pass_count'] = 0;
+}
+?>
+<!--suppress ALL -->
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo UNREG_TITLE ?></title>
+    <script type="text/javascript">
+        function cfrm() {
+            if (confirm('<?php 
+    echo UNREG_CONFIRM  . " " . $_SESSION['user'] . "\\n";
+    echo UNREG_WARNING;?>'))
+                document.getElementById("dform").submit();
+        }
+    </script>
+</head>
+<body>
+<form enctype="multipart/form-data" method="POST" id="dform">
+    <?php echo UNREG_PASS ?><input type="password" name="pass" /><br />
+    <?php
+    //if (($_SESSION['user_count']>6)||($_SESSION['pass_count']>9)){ 
+    echo "<br />" . UNREG_CAPT;
+    echo "<br /><img src=\"." . SYNAPP_CAPTCHA_PATH . "/captcha.image.php?nocache=" . hash("sha256", time()) . "\" border=\"0\" /><br />";
+    echo '<input name="magicword" type="text" /><br />';
+    //}
+    ?>
+    <?php
+    if (isset($_SESSION['login_err'])) {
+        if ($_SESSION['login_err'] == 1) {
+            echo "<span style=color:red>" . UNREG_ERR_1 . "</span><br />";
+            $_SESSION['login_err'] = 0;
+        } else if ($_SESSION['login_err'] == 2) {
+            echo "<span style=color:red>" . UNREG_ERR_2 . "</span><br />";
+            $_SESSION['login_err'] = 0;
+        } else if ($_SESSION['login_err'] == 3) {
+            echo "<span style=color:red>" . UNREG_ERR_3 . "</span><br />";
+            $_SESSION['login_err'] = 0;
+        } else if ($_SESSION['login_err'] == 403) {
+            echo "<span style=color:red>" . LOGIN_ERR_403 . "<br /><br />";
+            $_SESSION['login_err'] = 0;
+        }
+    }
+    echo "<br /><input type=\"button\" value=\"" . UNREG_SEND . "\" onclick=\"";
+    if (isset($_SESSION['code']) || $_SESSION['nomail']) {
+        echo "cfrm()\">";
+    } else {
+        echo "dform.submit()\">";
+    }
+    ?>
+</form>
+</body>
+</html>

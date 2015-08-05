@@ -1,0 +1,448 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+if ((!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) && (!isset($_SESSION['adm']) || $_SESSION['adm'] !== true)) {
+    header("Location: login.phtml?location=stats.phtml");
+    die();
+}
+$bAdm = isset($_SESSION['adm'])?$_SESSION['adm']:false;
+if (!$bAdm && ord($_SESSION['user_array']['confirmed_email']) === 0) {
+    header(
+        "Location: profile.phtml?user="
+        . $_SESSION['user_array']['user'] . "&edit=email&alert=true"
+    );
+    die();
+}
+$_SESSION['justlogged'] = false;
+require_once dirname(__FILE__) . '/connect.php';
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+$langfile = 'statstxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+require_once dirname(__FILE__) . '/account/parsers.php';
+$link = connect();
+if (isset($_GET['user'])) {
+    if (($user = parse($_GET['user'])) !== 0) {
+        die("Error: Not authorized.");
+    }
+    $user = $_GET['user'];
+    $sql = "SELECT input_language,working_group,hstats,hprofile FROM users WHERE user = :user";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+    $stmt->execute();
+    if ($stmt->rowCount() < 1) {
+        die("Error: Not authorized.");
+    }
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$bAdm && (((ord($row['hprofile']) !== 0) || (ord($row['hstats']) !== 0)) && (strtolower($user) !== strtolower(
+                $_SESSION['user_array']
+            )))
+    ) {
+        die("Error: Not authorized.");
+    }
+    $input_language = $row['input_language'];
+    $working_group = $row['working_group'];
+} else {
+    $user = $_SESSION['user_array']['user'];
+    $input_language = $_SESSION['user_array']['input_language'];
+    $working_group = $_SESSION['user_array']['working_group'];
+}
+/**
+ * @param \PDO $link
+ * @param string $own
+ * @param string $user
+ * @param string $lang
+ * @return array
+ */
+function get_historical($link, $own, $user, $lang)
+{
+    $check = ($own === "=") ? "=":"<>";
+    $sql = "SELECT 
+      CONCAT(UNIX_TIMESTAMP(DATE(`time_stamp`)),'000') AS daytimestamp
+    , ROUND(
+        (
+            (
+                  IFNULL(SUM(cohfullvotes),0)
+                + IFNULL(SUM(cohhalfvotes),0) * 0.5
+            )
+            /
+            IFNULL(
+                NULLIF(
+                      IFNULL(SUM(cohfullvotes),0)
+                    + IFNULL(SUM(cohzerovotes),0)
+                    + IFNULL(SUM(cohhalfvotes),0)
+                    , 0
+                )
+                , 1
+            )
+        ) * 10 
+        , 2
+    ) AS pointszerotenscale
+    , ROUND(
+        (
+            (
+                  IFNULL(SUM(orgfullvotes),0)
+                + IFNULL(SUM(orghalfvotes),0) *0.5 
+            )
+            /
+            IFNULL(
+                NULLIF(
+                      IFNULL(SUM(orgfullvotes),0)
+                    + IFNULL(SUM(orgzerovotes),0)
+                    + IFNULL(SUM(orghalfvotes),0)
+                    , 0 
+                ) 
+                , 1
+            )
+        ) * 10
+        , 2 
+    ) AS poppointszerotenscale 
+    FROM `vassociations` 
+    WHERE user {$check} :user " . ($check==='='?' AND lang = :lang ':'') . " 
+    GROUP BY DATE(`time_stamp`) 
+    ORDER BY `time_stamp`";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+    if ($check==='='){
+        $stmt->bindValue(':lang',$lang,PDO::PARAM_STR);
+    }
+    $stmt->execute();
+    $d = array("[","[");
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $d[0] .= "[" . $row['daytimestamp'] . ", " . $row['pointszerotenscale'] . "],";
+        $d[1] .= "[" . $row['daytimestamp'] . ", -" . $row['poppointszerotenscale'] . "],";
+    }
+    $d[0] = rtrim($d[0], ',') . "]";
+    $d[1] = rtrim($d[1], ',') . "]";
+    return $d;
+}
+$dd1 = get_historical($link, "<>", $user, $input_language);
+$dd2 = get_historical($link, "=", $user, $input_language);
+
+/**
+ * @param PDO $link
+ * @param $type
+ * @param $user
+ * @param $working_group
+ * @param $input_language
+ * @param int $minvotes
+ * @param int $minpopvotes
+ * @return array
+ */
+function get_scatter($link, $type, $user, $working_group, $input_language, $minvotes = 0, $minpopvotes = 0)
+{
+    $sql = "SELECT 
+          id1
+        , id2
+        , word
+        , type
+        , time_stamp
+        , cohfullvotes upvotes
+        , cohzerovotes downvotes
+        , cohhalfvotes neutralvotes
+        , ROUND(
+            (
+                (
+                      IFNULL(cohfullvotes,0)
+                    + IFNULL(cohhalfvotes,0) *0.5 
+                )
+                /
+                IFNULL(
+                    NULLIF(
+                          IFNULL(cohfullvotes,0)
+                        + IFNULL(cohzerovotes,0)
+                        + IFNULL(cohhalfvotes,0)
+                        , 0
+                    )
+                    , 1
+                )
+            ) * 10
+            , 2
+        ) AS pointszerotenscale
+        , ROUND(
+            (
+                (
+                      IFNULL(orgfullvotes,0)
+                    + IFNULL(orghalfvotes,0) *0.5
+                )
+                /
+                IFNULL(
+                    NULLIF(
+                          IFNULL(orgfullvotes,0)
+                        + IFNULL(orgzerovotes,0)
+                        + IFNULL(orghalfvotes,0)
+                        , 0 
+                    )
+                    ,1
+                )
+            ) * 10
+            , 2
+        ) AS poppointszerotenscale 
+        FROM `vassociations` 
+        WHERE 
+            user = :user
+            AND assigned_group = :working_group
+            AND lang = :input_language
+            AND type = :type 
+            AND (
+                  IFNULL(cohfullvotes,0)
+                + IFNULL(cohzerovotes,0)
+                + IFNULL(cohhalfvotes,0)
+            ) > :minvotes 
+            AND 
+                  IFNULL(orgfullvotes,0)
+                + IFNULL(orgzerovotes,0)
+                + IFNULL(orghalfvotes,0)
+            > :minpopvotes";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+    $stmt->bindValue(':working_group',$working_group,PDO::PARAM_STR);
+    $stmt->bindValue(':input_language',$input_language,PDO::PARAM_STR);
+    $stmt->bindValue(':type',$type,PDO::PARAM_INT);
+    $stmt->bindValue(':minvotes',$minvotes,PDO::PARAM_INT);
+    $stmt->bindValue(':minpopvotes',$minpopvotes,PDO::PARAM_INT);
+    $stmt->execute();
+    $scatter = array('dots' => "[");
+    $i = 0;
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $scatter['dots'] .= "[" . $row['pointszerotenscale'] . ", " . $row['poppointszerotenscale'] . "],";
+        $scatter['data'][$type - 1][$i]['id1'] = $row['id1'];
+        $scatter['data'][$type - 1][$i]['id2'] = $row['id2'];
+        $scatter['data'][$type - 1][$i]['word'] = $row['word'];
+        $scatter['data'][$type - 1][$i]['type'] = $row['type'];
+        $i++;
+    }
+    $scatter['dots'] = rtrim($scatter['dots'], ',') . "]";
+    return $scatter;
+}
+$scatter[0] = get_scatter($link, 1, $user, $working_group, $input_language);
+$scatter[1] = get_scatter($link, 2, $user, $working_group, $input_language);
+$link = null;
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title><?php echo ST_TITLE1 . $user . ST_TITLE2; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+    <!--[if lt IE 8]>
+    <style type="text/css">
+        #wrap {
+            top: 50%
+        }
+
+        #content {
+            top: -50%;
+        }
+    </style>
+    <![endif]-->
+    <!--[if lte IE 8]>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/excanvas.min.js"></script><![endif]-->
+    <script type="text/javascript">
+        var typenames = [];
+        typenames[0] = '<?php echo ST_SCATTERANSWER; ?>';
+        typenames[1] = '<?php echo ST_SCATTERFLASHANSWER; ?>';
+    </script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_JQUERY_PATH; ?>/jquery.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.selection.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.stack.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.symbol.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.axislabels.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.flot.navigate.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.curvedlines-0.2.1.min.js"></script>
+    <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jquery.mousewheel.min.js"></script>
+    <!--  <script type="text/javascript" src=".<?php echo SYNAPP_FLOT_PATH; ?>/jQAllRangeSliders-min.js"></script> -->
+    <?php if ($bAdm): ?>
+        
+        <link href="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+        <link href="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.css" type="text/css" rel="stylesheet" />
+        <link href="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.css" type="text/css" rel="stylesheet" />
+        <link href="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.css" type="text/css" rel="stylesheet" />
+        <link href="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/css/bootstrap-multiselect.min.css" type="text/css" rel="stylesheet" />
+        
+        <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_PATH; ?>/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_PATH; ?>/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/dataTables.tableTools.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_BOOTSTRAP_PATH; ?>/dataTables.bootstrap.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_DATATABLES_COLREORDER_PATH; ?>/dataTables.colReorder.min.js"></script>
+        <script type="text/javascript" src="..<?php echo SYNAPP_BOOTSTRAP_MULTISELECT_PATH; ?>/js/bootstrap-multiselect.min.js"></script>
+        
+    <?php endif; ?>
+    <script type="text/javascript" src="stats/js/getAnswersTable.js"></script>
+</head>
+<body <?php  if (!$bAdm): ?>onload="getAnswersTable('','associations','<?php echo $user; ?>',typenames);"<?php endif;?>>
+<div id="wrap">
+    <div id="content">
+        <?php
+        $page = "stats";
+        require_once dirname(__FILE__) . '/watrixbar.phtml';
+        echo "<h1><span style='text-decoration:underline;'>" . ST_HEADER
+            . $user . '</span></h1>' . PHP_EOL;?>
+        <span style="font-size:x-large;font-weight:bold;"><br/><?php echo ST_SCATTERDIAGRAM; ?></span>
+        <span style="font-size:medium;font-style:italic;"><br/><?php echo ST_SCATTERDIAGRAM_2; ?>
+            <br/><?php echo ST_SCATTERDIAGRAM_3; ?></span>
+
+        <div style="z-index:-1;width:560px;height:520px;margin: auto auto 40px;">
+            <div id="placeholderscatter" style="width:520px;height:520px;text-align:left;margin-bottom:0;"></div>
+        </div>
+        <span style="font-size:x-large;font-weight:bold;"><?php echo ST_HISTOGRAM; ?></span>
+        <span style="font-size:medium;font-style:italic;"><br/><?php echo ST_HISTOGRAM_2; ?>
+            <br/><?php echo ST_HISTOGRAM_3; ?><br/><?php echo ST_HISTOGRAM_4; ?></span>
+
+        <div id="placeholder" style="width:600px;height:400px;text-align:left;margin:auto;"></div>
+        <div id="overview" style="margin: 20px auto 40px;width:400px;height:50px"></div>
+        <script type="text/javascript">
+            var labelType1 = "<?php echo ST_SCATTERANSWER; ?>"
+              , labelType2 = "<?php echo ST_SCATTERFLASHANSWER; ?>"
+              , d1 = <?php echo $dd1[0]; ?>
+              , d2 = <?php echo $dd1[1]; ?>
+              , d3 = <?php echo $dd2[0]; ?>
+              , d4 = <?php echo $dd2[1]; ?>
+              , d5 = <?php echo $scatter[0]['dots']; ?>
+              , d6 = <?php echo $scatter[1]['dots']; ?>
+              , d7
+              , user = "<?php echo $user; ?>"
+              , bAdm = <?php echo $bAdm?'true':'false'; ?>
+              , authuser = "<?php echo isset($_SESSION['user_array'])?$_SESSION['user_array']['user']:$_SESSION['adm_array']['user']; ?>"
+              , scxaxlab = "<?php echo ST_SCATTERXAXISLABEL; ?>"
+              , scyaxlab = "<?php echo ST_SCATTERYAXISLABEL; ?>"
+              , scT1Ans = "<?php echo ST_SCATTERANSWER; ?>"
+              , scT2Ans = "<?php echo ST_SCATTERFLASHANSWER; ?>"
+              , recognitionYouLab = "<?php echo ST_HISTRECYOULAB; ?>"
+              , recognitionOthersLab = "<?php echo ST_HISTRECOTHERSLAB; ?>"
+              , originalityYouLab = "<?php echo ST_HISTORGYOULAB; ?>"
+              , originalityOthersLab = "<?php echo ST_HISTORGOTHERSLAB; ?>"
+              , scatterData = []
+              , bAssociation = true;
+            scatterData[0] = [];
+            scatterData[1] = [];
+            <?php 
+            if (is_array($scatter)){
+                foreach ($scatter as $i=>$sDi) { 
+                    if(is_array($sDi) && isset($sDi['data'])){
+                        foreach ($sDi['data'] as $j=>$sDij){
+                            if(is_array($sDij)){
+                                foreach ($sDij as $k=>$sDijk){
+                                    echo "scatterData[".$j."][".$k."] = new Array();".PHP_EOL; 
+                                    echo "scatterData[".$j."][".$k."]['id1'] = (bAdm || user.toLowerCase()===authuser.toLowerCase())?'"
+                                    . $sDijk['id1']."':'';".PHP_EOL;
+                                    echo "scatterData[".$j."][".$k."]['id2'] = (bAdm || user.toLowerCase()===authuser.toLowerCase())?'"
+                                    . $sDijk['id2']."':'';".PHP_EOL;
+                                    echo "scatterData[".$j."][".$k."]['word'] = '". addslashes($sDijk['word'])."';".PHP_EOL;
+                                    echo "scatterData[".$j."][".$k."]['type'] = '". $sDijk['type']."';".PHP_EOL;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ?>
+            if (bAdm){
+                $(document).ready(function(){
+                    var table, $DivDttt, $row, tt, data={};
+                    data.language = <?php $kk = file_get_contents(dirname(__FILE__)."/languages/{$_SESSION['if_lang']}/admin/dt.json"); echo $kk; ?>;
+
+                    table = $('#statstable').DataTable();
+                    
+                    tt = new $.fn.dataTable.TableTools( table, {"sSwfPath": "..<?php echo SYNAPP_DATATABLES_TABLETOOLS_PATH; ?>/../swf/copy_csv_xls_pdf.swf","aButtons": [
+                        {
+                            "sExtends":     "copy",
+                            "sButtonText": "Copiar"
+                        },
+                        {
+                            "sExtends":     "csv",
+                            "sButtonText": "CSV"
+                        },
+                        {
+                            "sExtends":     "xls",
+                            "sButtonText": "Excel"
+                        },
+                        {
+                            "sExtends":     "pdf",
+                            "sButtonText": "PDF"
+                        },
+                        {
+                            "sExtends":     "print",
+                            "sButtonText": "Imprimir"
+                        }
+                    ]} );
+
+                    $( tt.fnContainer() ).insertBefore('div.dataTables_wrapper');
+
+                    new $.fn.dataTable.ColReorder( table );
+
+                    $DivDttt = $('div.DTTT');
+                    $DivDttt.css('margin-bottom', '0.5em');
+                    $DivDttt.css('float', 'right');
+                    $('div.dataTables_wrapper').css('clear', 'both');
+                    $('table.dataTable th').css('vertical-align', 'top');
+                    $row = $('#usersList_wrapper').find('.row').eq(1);
+                    $row.css('width', '100%');
+                    $row.css('overflow-x', 'auto');
+                    $row.css('margin', 'auto');
+
+                    table.columns.adjust();
+                });
+            }
+        </script>
+        <script type="text/javascript" src="graphs/js/generateScatter.js"></script>
+        <script type="text/javascript" src="graphs/js/generatePolyGraph.js"></script>
+        <div style="margin-left:auto;margin-right:auto;text-align:center;"><span
+                style="font-size:x-large;font-weight:bold;"><?php echo ST_TANSWERSTABLE_1; ?></span>
+            <br/><span style="font-size:medium;font-style:italic;"><?php echo ST_TANSWERSTABLE_2; ?></span>
+            <table id="statstable" class="statstable" style="margin-left:auto;margin-right:auto;text-align:center;">
+                <thead>
+                <tr>
+                    <th>  <?php if (!$bAdm): ?><a href="#"
+                           onclick="getAnswersTable('answer','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TANSWER; ?><?php if (!$bAdm): ?> </a><?php endif; ?> 
+                    </th>
+                    <th>  <?php if (!$bAdm): ?><a  href="#"
+                           onclick="getAnswersTable('type','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TTYPE; ?><?php if (!$bAdm): ?> </a><?php endif; ?> 
+                    </th>
+                    <th>  <?php if (!$bAdm): ?><a  href="#"
+                           onclick="getAnswersTable('points','tests','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TPOINTSINT; ?><?php if (!$bAdm): ?> </a><?php endif; ?> /  <?php if (!$bAdm): ?><a 
+                            href="#"
+                            onclick="getAnswersTable('points','tests','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TPOINTSORG; ?><?php if (!$bAdm): ?> </a><?php endif; ?> 
+                        (  <?php if (!$bAdm): ?><a  href="#"
+                            onclick="getAnswersTable('points','tests','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TPOINTS; ?><?php if (!$bAdm): ?> </a><?php endif; ?> )
+                    </th>
+                    <th><?php echo ST_TFULLVOTES; ?> (  <?php if (!$bAdm): ?><a  href="#"
+                                                         onclick="getAnswersTable('upvotesint','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TUND; ?><?php if (!$bAdm): ?> </a><?php endif; ?> /  <?php if (!$bAdm): ?><a 
+                            href="#"
+                            onclick="getAnswersTable('upvotescre','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TCRE; ?><?php if (!$bAdm): ?> </a><?php endif; ?> )
+                    </th>
+                    <th><?php echo ST_THALFVOTES; ?> (  <?php if (!$bAdm): ?><a  href="#"
+                                                         onclick="getAnswersTable('neutralvotesint','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TUND; ?><?php if (!$bAdm): ?> </a><?php endif; ?> /  <?php if (!$bAdm): ?><a 
+                            href="#"
+                            onclick="getAnswersTable('neutralvotescre','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TCRE; ?><?php if (!$bAdm): ?> </a><?php endif; ?> )
+                    </th>
+                    <th><?php echo ST_TZEROVOTES; ?> (  <?php if (!$bAdm): ?><a  href="#"
+                                                         onclick="getAnswersTable('downvotesint','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TUND; ?><?php if (!$bAdm): ?> </a><?php endif; ?> /  <?php if (!$bAdm): ?><a 
+                            href="#"
+                            onclick="getAnswersTable('downvotescre','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TCRE; ?><?php if (!$bAdm): ?> </a><?php endif; ?> )
+                    </th>
+                    <th>  <?php if (!$bAdm): ?><a  href="#"
+                           onclick="getAnswersTable('timestamp','associations','<?php echo $user; ?>',typenames);return false;"><?php endif; echo ST_TTIMEOFASSOC; ?><?php if (!$bAdm): ?> </a><?php endif; ?> 
+                    </th>
+                </tr>
+                </thead>
+                <tbody id="answersTableBody"><?php if ($bAdm){
+                    $_REQUEST['orderby'] = '';
+                    $_REQUEST['orderbytype'] = 'associations';
+                    $_REQUEST['type_1'] = ST_SCATTERANSWER;
+                    $_REQUEST['type_2'] = ST_SCATTERFLASHANSWER;
+                    require dirname(__FILE__).'/stats/get_answers_table.php';
+                }  ?></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

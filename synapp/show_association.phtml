@@ -1,0 +1,189 @@
+<?php
+session_start();
+require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
+if ((!isset($_SESSION['auth']) || $_SESSION['auth']!==true) && (!isset($_SESSION['adm']) || $_SESSION['adm']!==true)) {
+    header(
+        "Location: login.phtml?location=" . urlencode(
+            "show_association.phtml?user="
+            . $_GET['user'] . "&id1=" . $_GET['id1'] . "&id2=" . $_GET['id2'] . "&word=" . $_GET['word'] . "&type=" . $_GET['type']
+        )
+    );
+    die();
+}
+if (!isset($_SESSION['if_lang'])) {
+    $_SESSION['if_lang'] = "eng";
+}
+require_once dirname(__FILE__) . '/connect.php';
+require_once dirname(__FILE__) . '/account/parsers.php';
+$langfile = 'statstxt.php';
+if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile)) {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' . $langfile;
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
+}
+
+$_GET['user'] = urldecode($_GET['user']);
+$_GET['id1'] = urldecode($_GET['id1']);
+$_GET['id2'] = urldecode($_GET['id2']);
+$_GET['word'] = urldecode($_GET['word']);
+$_GET['type'] = urldecode($_GET['type']);
+$link = connect();
+if (isset($_GET['user'])) {
+    if (parse($_GET['user']) !== 0) {
+        // we do not allow to view another user's association details so it doesn't interfere with the experiment
+        die("Error: Not authorized.");
+    }
+    $user = $_GET['user'];
+    if (!isset($_SESSION['adm']) && strtolower($user) !== strtolower($_SESSION['user_array']['user'])) {
+        die ("Error: Not authorized.");
+    }
+    $sql = "SELECT input_language,working_group FROM users WHERE user = :user";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+    $stmt->execute();
+    if ($stmt->rowCount() < 1) {
+        die("Error: Not authorized.");
+    }
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $input_language = $row['input_language'];
+    $working_group = $row['working_group'];
+} else {
+    $user = $_SESSION['user_array']['user'];
+    $input_language = $_SESSION['user_array']['input_language'];
+    $working_group = $_SESSION['user_array']['working_group'];
+}
+$sql = "SELECT 
+          `associd`
+        , `id1`
+        , `id2`
+        , `assigned_group`
+        , `user`
+        , `lang`
+        , `word`
+        , `time_stamp`
+        , `type`
+        , `cohfullvotes` upvotes
+        , `cohhalfvotes` neutralvotes
+        , `cohzerovotes` downvotes
+        , `orgfullvotes` popupvotes
+        , `orghalfvotes` popneutralvotes
+        , `orgzerovotes` popdownvotes
+        , ROUND(
+            (
+                (
+                      IFNULL(cohfullvotes,0)
+                    + IFNULL(cohhalfvotes,0) * 0.5
+                    + IFNULL(orgfullvotes,0)
+                    + IFNULL(orghalfvotes,0) * 0.5
+                )
+                /
+                IFNULL(
+                    NULLIF(
+                          IFNULL(cohfullvotes,0)
+                        + IFNULL(cohzerovotes,0)
+                        + IFNULL(cohhalfvotes,0)
+                        + IFNULL(orgfullvotes,0)
+                        + IFNULL(orgzerovotes,0)
+                        + IFNULL(orghalfvotes,0)
+                        , 0
+                    )
+                    , 1
+                )
+            ) * 10
+            , 2
+        ) AS allpointszerotenscale
+        , ROUND(
+            (
+                (
+                      IFNULL(cohfullvotes,0)
+                    + IFNULL(cohhalfvotes,0) * 0.5
+                )
+                /
+                IFNULL(
+                    NULLIF(
+                          IFNULL(cohfullvotes,0)
+                        + IFNULL(cohzerovotes,0)
+                        + IFNULL(cohhalfvotes,0)
+                        , 0
+                    )
+                    , 1
+                )
+            ) * 10
+            , 2
+        ) AS intpointszerotenscale
+        , ROUND(
+            (
+                (
+                      IFNULL(orgfullvotes,0)
+                    + IFNULL(orghalfvotes,0) * 0.5
+                )
+                /
+                IFNULL(
+                    NULLIF(
+                          IFNULL(orgfullvotes,0)
+                        + IFNULL(orgzerovotes,0)
+                        + IFNULL(orghalfvotes,0)
+                        , 0
+                    )
+                    , 1
+                )
+            ) * 10
+            , 2
+        ) AS orgpointszerotenscale
+        FROM `vassociations` 
+        WHERE
+            user = :user AND assigned_group = :working_group AND lang = :input_language
+            AND id1 = :id1 AND id2 = :id2 AND word = :word AND type = :type";
+$stmt = $link->prepare($sql);
+$stmt->bindValue(':user',$user,PDO::PARAM_STR);
+$stmt->bindValue(':working_group',$working_group,PDO::PARAM_STR);
+$stmt->bindValue(':input_language',$input_language,PDO::PARAM_STR);
+$stmt->bindValue(':id1',$_GET['id1'],PDO::PARAM_INT);
+$stmt->bindValue(':id2',$_GET['id2'],PDO::PARAM_INT);
+$stmt->bindValue(':word',$_GET['word'],PDO::PARAM_STR);
+$stmt->bindValue(':type',$_GET['type'],PDO::PARAM_INT);
+$stmt->execute();
+$out = "";
+if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $typestr = ($row['type'] === 1) ? ST_SIMULTANEOUS : ST_SEQUENTIAL;
+    $out .= "<table class='statstable' style='margin-left:auto;margin-right:auto;text-align:center;'>
+    <thead><tr>
+    <th>" . ST_TTYPE . "</th>
+    <th>" . ST_TPOINTS . "</th>
+    <th>" . ST_TFULLVOTES . " (" . ST_TUND . "/" . ST_TCRE . ")</th>
+    <th>" . ST_THALFVOTES . " (" . ST_TUND . "/" . ST_TCRE . ")</th>
+    <th>" . ST_TZEROVOTES . " (" . ST_TUND . "/" . ST_TCRE . ")</th>
+    <th>" . ST_TTIMEOFASSOC . "</th></tr></thead>
+    <tbody id='answersTableBody'><tr>
+    <td>" . $typestr . "</td>
+    <td>" . $row['allpointszerotenscale'] . "</td>
+    <td>" . $row['upvotes'] . "/" . $row['popupvotes'] . "</td>
+    <td>" . $row['neutralvotes'] . "/" . $row['popneutralvotes'] . "</td>
+    <td>" . $row['downvotes'] . "/" . $row['popdownvotes'] . "</td>
+    <td>" . $row['time_stamp'] . "</td>
+    </tr></table>" . PHP_EOL;
+}
+$result = $link = null;
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><?php echo ST_ASS_TITLE; ?></title>
+    <link href=".<?php echo SYNAPP_UI_RESOURCES_PATH; ?>/style/dist/consolidated.min.css" rel="stylesheet" type="text/css"/>
+</head>
+<body onload="document.getElementById('answer').size=document.getElementById('answer').value.length;">
+<div id="wrap">
+    <div id="content">
+        <img src="uploads/images/<?php echo $_GET['id1']; ?>" alt="img1" title="img1"/><img
+            src="uploads/images/<?php echo $_GET['id2']; ?>" alt="img2" title="img2"/>
+
+        <div style="padding:20px;"><label><input type="text" id="answer" disabled="disabled" size="64"
+                                          value="<?php echo $_GET['word']; ?>"></label></div>
+        <div><?php echo $out; ?></div>
+    </div>
+</div>
+</body>
+</html>

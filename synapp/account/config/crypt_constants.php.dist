@@ -1,0 +1,7 @@
+<?php
+// edit and save as path/to/synapp/account/{SYNAPP_CONFIG_DIRNAME}/crypt_constants.php
+define ("CRYPT_BYPASS", true); // setting CRYPT_BYPASS to true explicitly disables gpg RSA password encryption on client before transmission (this encryption is useful to avoid password eavesdropping over non SSL connections, but not PHPSESSIONID hijacking; regardless of this setting, encryption will be enabled only if requires PHP gnupg PECL extension is available)
+define ("PUBLIC_GPG_KEY", "CADb8wwrvtVUvM7S8uykFasgt5ymlFpF0pac+qIFBZgN8JCBXzLzVSHifElgmzBBgMnGNoozVOiLAA/eoh/mIdyf3Iaxc/lxQlt2vwwg9nlZZ9V5qsw2AUoc+AlkHyW0KTgk5nUninG0f4nIE0WPKrLgKhlMKkjf8efCm8DI8MACyBv4hWBDiiSp68NfCPDyle9/rQEvXVm66WL1xkQd6XVNzO526NO0khBgmIeqmYRNYsBBSKW+UjzMqmy70DaGHbpxwPFonUcnpdjaGaDXPkadvLVoMOYRjt+i7NCS+6cK+ql/rhlSrKpvc71pIegukVOOPaIC1mZ751drkNlKwKHtABEBAAE=");
+define ("PUBLIC_GPG_KEY_ID", "db710f9afcf063a8");
+define ("SYNAPP_GPG_KEY_FINGERPRINT","AE39CB75E8B4E3BCC78748495089BD85ACDEC200");
+define ("SYNAPP_GNUPG_HOME","/var/.gnupg/www-data"); // GnuPG key store folder from which the private key will be read on password decryption
