@@ -520,7 +520,7 @@ function change_email($edit, $link)
 
             $sql = "SELECT user, email FROM confirmed_emails where email = :email";
             $stmt = $link->prepare($sql);
-            $stmt->bindValue(':edit', $_POST[$edit], PDO::PARAM_STR);
+            $stmt->bindValue(':email', $_POST[$edit], PDO::PARAM_STR);
 
             if ($stmt->execute() !== false && $row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
