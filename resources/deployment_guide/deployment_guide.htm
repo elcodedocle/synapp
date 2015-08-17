@@ -1,7 +1,7 @@
-<html>
+ï»¿<html>
 
 <head>
-<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <meta name=Generator content="Microsoft Word 14 (filtered)">
 <style>
 <!--
@@ -113,27 +113,27 @@ let's go: </span></p>
 
 <p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - First you log into your AWS account, go
+<p class=MsoNormal><span lang=EN-GB>Â - First you log into your AWS account, go
 to EC2, confirm you are in your region of choice (in my case north virginia, as
 you can see in the top right of the screen capture) and then click on the
 launch instance button that shows up when you select the instances tab</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 2" src="deployment_guide_files/image001.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Now pick your AMI from the AWS
+<p class=MsoNormal><span lang=EN-GB>Â - Now pick your AMI from the AWS
 marketplace tab: Centos 7 with updates on HVM virtualization</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 3" src="deployment_guide_files/image002.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Pick the instance type: A general
+<p class=MsoNormal><span lang=EN-GB>Â - Pick the instance type: A general
 purpose t2.micro, with 2.5GHz and 1GB of RAM, is a good place to start</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 4" src="deployment_guide_files/image003.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Fill in the instance details form, so it
+<p class=MsoNormal><span lang=EN-GB>Â - Fill in the instance details form, so it
 looks more or less like this. It is a no brainer. You will have to create a VPC
 and subnet if you don't have one (As a general rule avoid EC2 Classic even when
 it is an option; if you become a frequent AWS user you'll thank me for that
@@ -141,10 +141,10 @@ many times). In this case I did not enable a public IP because I wanted to
 transfer an Elastic IP address from another instance, as I will show you later
 on.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 5" src="deployment_guide_files/image004.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - For the storage, I chose the General
+<p class=MsoNormal><span lang=EN-GB>Â - For the storage, I chose the General
 purpose SSD option because I don't expect significant load most of the time, it
 is cheap and it performs better than magnetic storage on occasional peaks. The
 only app I will deploy on this server will not require more than a few
@@ -153,16 +153,16 @@ leave me with 1 GB for swapping plus 4GB of free space for their needs, and it
 didn't took much of a design effort to make sure I could move all the user
 space to another drive without downtime or hassle if I ever require it.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 6" src="deployment_guide_files/image005.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Moving on to the tagging step. Here you
+<p class=MsoNormal><span lang=EN-GB>Â - Moving on to the tagging step. Here you
 name your instance. This should be an easy one.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 7" src="deployment_guide_files/image006.png"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - The next step is a little bit tricky.
+<p class=MsoNormal><span lang=EN-GB>Â - The next step is a little bit tricky.
 You can always edit this settings and open up any service you require, so I
 suggest to leave it to the absolute minimum. Something I usually do is restrict
 the source of all incoming connections to my IP until I finish deploying the
@@ -172,15 +172,15 @@ whole EC2 management process in one part instead of adding an extra bit at the
 end of the last one. If you are doing the whole set up in one session it won't
 make much of a difference, anyway.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 8" src="deployment_guide_files/image007.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Last step before launch is to review the
+<p class=MsoNormal><span lang=EN-GB>Â - Last step before launch is to review the
 configuration, and the most important! You must generate and download a
 public/private key pair to connect to the instance you are about to launch.
 Later on I will show you how to set up this connection.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=675
 id="Picture 9" src="deployment_guide_files/image008.jpg"></p>
 
 <p class=MsoNormal><img width=567 height=675 id="Picture 10"
@@ -189,22 +189,22 @@ src="deployment_guide_files/image009.jpg"></p>
 <p class=MsoNormal><img width=567 height=675 id="Picture 11"
 src="deployment_guide_files/image010.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - This is what you will see when your
+<p class=MsoNormal><span lang=EN-GB>Â - This is what you will see when your
 instance is running. Wait for the checks to show and that will mean it is ready
 to accept connections. If you have not assigned a public IP address you will
 have to connect internally through another machine on the subnet or, like I am
 about to do, assign a public IP address to the machine so you can establish a
 direct connection from your PC.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=663
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=663
 id="Picture 13" src="deployment_guide_files/image011.jpg"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Creating and assigning an Elastic public
+<p class=MsoNormal><span lang=EN-GB>Â - Creating and assigning an Elastic public
 IP address to an instance is very easy. You can see I am releasing it from a
 running instance but you can also do a hot swap reassignment. Just select the
 Elastic IPs tab on the menu and fill in the form on the screen, like this.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=651
+<p class=MsoNormal><span lang=EN-GB>Â </span><img width=567 height=651
 id="Picture 15" src="deployment_guide_files/image012.jpg"></p>
 
 <p class=MsoNormal><img width=567 height=651 id="Picture 16"
@@ -222,14 +222,14 @@ yesterday.</span></p>
 
 <p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Moving on: the first step is to download
+<p class=MsoNormal><span lang=EN-GB>Â - Moving on: the first step is to download
 and install WinSCP (</span><a href="http://www.winscp.com"><span lang=EN-GB>http://www.winscp.com</span></a><span
 lang=EN-GB>) and then run the putty key generator that comes with it. This tool
 will allow you to open the key pair you downloaded before launching the
 instance (If you didn't you are out of luck because Amazon doesn't store them),
 and save the private key part so you can assign it to your connection.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img border=0 width=567 height=615
+<p class=MsoNormal><span lang=EN-GB>Â </span><img border=0 width=567 height=615
 id="Picture 18" src="deployment_guide_files/image015.png"></p>
 
 <p class=MsoNormal><img border=0 width=490 height=476 id="Picture 20"
@@ -243,7 +243,7 @@ src="deployment_guide_files/image017.png"></p>
 <p class=MsoNormal><img border=0 width=567 height=624 id="Picture 22"
 src="deployment_guide_files/image018.png"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Once you have done that you are ready to
+<p class=MsoNormal><span lang=EN-GB>Â - Once you have done that you are ready to
 set up a WinSCP or putty connection to your server to transfer files from it
 and to it or open a terminal to issue commands to the server from it. The only
 problem is that you have to use the &quot;unprivileged&quot; user centos. A
@@ -251,17 +251,17 @@ simple sudo su will give you root access on the console but that's still a
 problem when you want to transfer files to restricted folders, so here is how
 to do to activate root login.</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - First, edit /etc/ssh/sshd_config to
+<p class=MsoNormal><span lang=EN-GB>Â - First, edit /etc/ssh/sshd_config to
 uncomment and set PermitRootLogin option to yes</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=453 id="Picture 23"
 src="deployment_guide_files/image019.png"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Then, edit /root/.ssh/autorized_keys and
+<p class=MsoNormal><span lang=EN-GB>Â - Then, edit /root/.ssh/autorized_keys and
 delete all the rubble before the key, particularly the echo command, so it ends
 up like this</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> </span><img border=0 width=567 height=381
+<p class=MsoNormal><span lang=EN-GB>Â </span><img border=0 width=567 height=381
 id="Picture 24" src="deployment_guide_files/image020.png"></p>
 
 <p class=MsoNormal><img border=0 width=567 height=381 id="Picture 25"
@@ -623,13 +623,13 @@ it to work:</span></p>
 
 <p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - First, configure the allowed extensions
+<p class=MsoNormal><span lang=EN-GB>Â - First, configure the allowed extensions
 on the etc/php-fpm.d/www.conf file.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=611 id="Picture 71"
 src="deployment_guide_files/image062.png"></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Now, edit the sendmail path on the
+<p class=MsoNormal><span lang=EN-GB>Â - Now, edit the sendmail path on the
 /etc/php.ini PHP configuration file to make it work with postfix, which is the
 default MTA we installed in the second part of this series.</span></p>
 
@@ -689,16 +689,16 @@ aspects would be: </p>
 
 <p class=MsoNormal>&nbsp;</p>
 
-<p class=MsoNormal><span lang=EN-GB> - Installing composer and building the app
+<p class=MsoNormal><span lang=EN-GB>Â - Installing composer and building the app
 and its dependencies on a public web folder from its git repository; </span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Importing the SQL DDL script containing
+<p class=MsoNormal><span lang=EN-GB>Â - Importing the SQL DDL script containing
 the application database schema definition; </span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - Configuring the database connection
+<p class=MsoNormal><span lang=EN-GB>Â - Configuring the database connection
 settings and application paths and routes; </span></p>
 
-<p class=MsoNormal><span lang=EN-GB> - And, when everything is ready, pointing
+<p class=MsoNormal><span lang=EN-GB>Â - And, when everything is ready, pointing
 the domain to the machine where the application is serving requests.</span></p>
 
 <p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
