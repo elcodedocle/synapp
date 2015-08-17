@@ -297,13 +297,18 @@ enabled during the installation process will usually only require the extra
 step of installing the PHP extension modules listed on the previous section to 
 have it ready for deployment. 
 
-For help deploying a CentOS 6.X LAMP stack:
+There is a [detailed tutorial][53] available on the resources/deployment_guide 
+folder of this repository which will guide you step by step on setting up an 
+environment and deploying the project on an Amazon EC2 CentOS 7 instance. 
+This is the recommended and most tested production environment.
+
+For general help deploying a CentOS 6.X LAMP stack:
 
  * You can check out [this online tutorial][7].
 
 [Details on how to upgrade to the latest PHP version][22] may also be useful.
 
-For help deploying a CentOS 7.X LAMP stack (x86-64 architecture):
+For general help deploying a CentOS 7.X LAMP stack (x86-64 architecture):
  
  * You can checkout [this online tutorial][20]
 
@@ -516,3 +521,4 @@ its root folder.
 [50]: https://github.com/DataTables/Plugins/tree/1.10.7/integration/bootstrap/3
 [51]: https://bitbucket.org/synappv1/synapp/issues
 [52]: https://bitbucket.org/synappv1/synapp/fork
+[53]: http://htmlpreview.github.io/?https://bitbucket.org/synappv1/synapp/raw/master/resources/deployment_guide/deployment_guide.htm

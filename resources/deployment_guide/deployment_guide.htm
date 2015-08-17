@@ -1,0 +1,841 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=Generator content="Microsoft Word 14 (filtered)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:Tahoma;
+	panose-1:2 11 6 4 3 5 4 4 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:10.0pt;
+	margin-left:0cm;
+	line-height:115%;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p.MsoAcetate, li.MsoAcetate, div.MsoAcetate
+	{mso-style-link:"Balloon Text Char";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	font-size:8.0pt;
+	font-family:"Tahoma","sans-serif";}
+span.BalloonTextChar
+	{mso-style-name:"Balloon Text Char";
+	mso-style-link:"Balloon Text";
+	font-family:"Tahoma","sans-serif";}
+.MsoChpDefault
+	{font-family:"Calibri","sans-serif";}
+.MsoPapDefault
+	{margin-bottom:10.0pt;
+	line-height:115%;}
+@page WordSection1
+	{size:595.3pt 841.9pt;
+	margin:70.85pt 3.0cm 70.85pt 3.0cm;}
+div.WordSection1
+	{page:WordSection1;}
+-->
+</style>
+
+</head>
+
+<body lang=ES link=blue vlink=purple>
+
+<div class=WordSection1>
+
+<p class=MsoNormal><span lang=EN-GB>17/08/2015 </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>FULL STACK ENGINEERING; DIY DEVOPS - How to
+set up a CA signed SSL web application, LAMP stack and CentOS 7 AWS EC2
+t2.micro instance in &lt; 30 minutes.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>DISCLAIMER: This tutorial is about setting
+a reasonably safe and secured production environment while throwing out of the
+window some annoying industry standard good practices (particularly selinux
+policy enforcement and application based database permissions) which are time
+consuming and/or require a good deal of skill and effort to be properly put in
+place and maintained. This is a big NO if you have the resources and time to do
+otherwise, specially if your web app grows big enough or manages critical enough
+data to be considered anything else than a random target for a malicious
+hacker. Unless that is the case or you are contractually bound otherwise, I
+would recommend starting with a set up like this and build up carefully
+designed and implemented custom security measures and policies that make sense
+in the context they are going to be used. In other words: Before thinking on
+building on a hurry an online fortress with complex auditing and security
+constrains (which if you are not an expert you will probably misuse, leaving
+the doors open for anybody to enter), make sure that you know how to set the
+basic locks on a public server so you or anyone having a key + passphrase are
+the only ones able to do nasty stuff on it. Also, don't spend countless hours on
+having the most awesome, secure and efficient production environment when you
+still have less than 1000 users and your beta service is still full of bugs and
+lacks very much demanded functionality and UX improvements; that's the shortest
+path to sink. Instead, try to start with something sound and simple and keep
+making it better. That being said, I take no responsibility for the damage that
+any of my advice might cause to your company or reputation.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>1/5: DEPLOY AND ACCESS AN AWS EC2 CENTOS 7
+INSTANCE</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>On this part I will show how to quickly
+deploy an affordable AWS EC2 LAMP instance for kick-starting a production
+environment. It won't handle boatloads of traffic but with the proper tuning
+you will be able to serve up more than 50 simultaneous average requests, like a
+WordPress user requesting a blog page, without your users noticing any
+performance impact; and without the need of setting up any kind of load
+balancing or dynamic content caching mechanism.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>Since I want to make this quick I will
+presume you already are somehow familiar with the terminology and the
+technology involved and have at least a notion of what you are about to do, so
+let's go: </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - First you log into your AWS account, go
+to EC2, confirm you are in your region of choice (in my case north virginia, as
+you can see in the top right of the screen capture) and then click on the
+launch instance button that shows up when you select the instances tab</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 2" src="deployment_guide_files/image001.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Now pick your AMI from the AWS
+marketplace tab: Centos 7 with updates on HVM virtualization</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 3" src="deployment_guide_files/image002.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Pick the instance type: A general
+purpose t2.micro, with 2.5GHz and 1GB of RAM, is a good place to start</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 4" src="deployment_guide_files/image003.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Fill in the instance details form, so it
+looks more or less like this. It is a no brainer. You will have to create a VPC
+and subnet if you don't have one (As a general rule avoid EC2 Classic even when
+it is an option; if you become a frequent AWS user you'll thank me for that
+many times). In this case I did not enable a public IP because I wanted to
+transfer an Elastic IP address from another instance, as I will show you later
+on.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 5" src="deployment_guide_files/image004.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - For the storage, I chose the General
+purpose SSD option because I don't expect significant load most of the time, it
+is cheap and it performs better than magnetic storage on occasional peaks. The
+only app I will deploy on this server will not require more than a few
+megabytes per user, and that's the worst case scenario. Choosing 8 GB will
+leave me with 1 GB for swapping plus 4GB of free space for their needs, and it
+didn't took much of a design effort to make sure I could move all the user
+space to another drive without downtime or hassle if I ever require it.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 6" src="deployment_guide_files/image005.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Moving on to the tagging step. Here you
+name your instance. This should be an easy one.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 7" src="deployment_guide_files/image006.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - The next step is a little bit tricky.
+You can always edit this settings and open up any service you require, so I
+suggest to leave it to the absolute minimum. Something I usually do is restrict
+the source of all incoming connections to my IP until I finish deploying the
+app and I am ready to go live, which I recommend you do instead. I have adapted
+this workflow a little bit and set the machine live right away to cover the
+whole EC2 management process in one part instead of adding an extra bit at the
+end of the last one. If you are doing the whole set up in one session it won't
+make much of a difference, anyway.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 8" src="deployment_guide_files/image007.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Last step before launch is to review the
+configuration, and the most important! You must generate and download a
+public/private key pair to connect to the instance you are about to launch.
+Later on I will show you how to set up this connection.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=675
+id="Picture 9" src="deployment_guide_files/image008.jpg"></p>
+
+<p class=MsoNormal><img width=567 height=675 id="Picture 10"
+src="deployment_guide_files/image009.jpg"></p>
+
+<p class=MsoNormal><img width=567 height=675 id="Picture 11"
+src="deployment_guide_files/image010.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - This is what you will see when your
+instance is running. Wait for the checks to show and that will mean it is ready
+to accept connections. If you have not assigned a public IP address you will
+have to connect internally through another machine on the subnet or, like I am
+about to do, assign a public IP address to the machine so you can establish a
+direct connection from your PC.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=663
+id="Picture 13" src="deployment_guide_files/image011.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Creating and assigning an Elastic public
+IP address to an instance is very easy. You can see I am releasing it from a
+running instance but you can also do a hot swap reassignment. Just select the
+Elastic IPs tab on the menu and fill in the form on the screen, like this.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img width=567 height=651
+id="Picture 15" src="deployment_guide_files/image012.jpg"></p>
+
+<p class=MsoNormal><img width=567 height=651 id="Picture 16"
+src="deployment_guide_files/image013.jpg"></p>
+
+<p class=MsoNormal><img width=567 height=651 id="Picture 17"
+src="deployment_guide_files/image014.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB>That's all. You set your instance running
+in no time and we have arrived to the second part of this part where you can
+see how to connect to it using WinSCP and putty SSH client. With all due
+respect to Windows users, the reason I am not showing how to do this to Linux
+desktop users is that you will probably think that I think that you were born
+yesterday.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Moving on: the first step is to download
+and install WinSCP (</span><a href="http://www.winscp.com"><span lang=EN-GB>http://www.winscp.com</span></a><span
+lang=EN-GB>) and then run the putty key generator that comes with it. This tool
+will allow you to open the key pair you downloaded before launching the
+instance (If you didn't you are out of luck because Amazon doesn't store them),
+and save the private key part so you can assign it to your connection.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img border=0 width=567 height=615
+id="Picture 18" src="deployment_guide_files/image015.png"></p>
+
+<p class=MsoNormal><img border=0 width=490 height=476 id="Picture 20"
+src="deployment_guide_files/image016.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=394 id="Picture 21"
+src="deployment_guide_files/image017.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=624 id="Picture 22"
+src="deployment_guide_files/image018.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Once you have done that you are ready to
+set up a WinSCP or putty connection to your server to transfer files from it
+and to it or open a terminal to issue commands to the server from it. The only
+problem is that you have to use the &quot;unprivileged&quot; user centos. A
+simple sudo su will give you root access on the console but that's still a
+problem when you want to transfer files to restricted folders, so here is how
+to do to activate root login.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - First, edit /etc/ssh/sshd_config to
+uncomment and set PermitRootLogin option to yes</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 23"
+src="deployment_guide_files/image019.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Then, edit /root/.ssh/autorized_keys and
+delete all the rubble before the key, particularly the echo command, so it ends
+up like this</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> </span><img border=0 width=567 height=381
+id="Picture 24" src="deployment_guide_files/image020.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 25"
+src="deployment_guide_files/image021.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 27"
+src="deployment_guide_files/image022.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>In case you are interested on activating a
+swap partition to avoid occasional out-of-memory service crashes:<br>
+<br>
+dd if=/dev/zero of=/swapfile bs=1M count=2048<br>
+chown root:root /swapfile<br>
+sudo chmod 600 /swapfile<br>
+sudo mkswap /swapfile<br>
+sudo swapon /swapfile<br>
+echo '/swapfile swap swap defaults 0 0' &gt;&gt; /etc/fstab<br>
+<br>
+You should set the swappiness to a minimum (sysctl vm.swappiness=10 and add
+vm.swappiness=10 to /etc/sysctl.conf to persist it on reboot) and monitor the
+swap usage closely, though: Amazon charges EBS volumes based on USAGE and they
+will charge you A LOT if you make heavy use of them. In that case you will be
+saving money and getting a much greater performance by upgrading your instance
+to a &quot;non-EBS only&quot;, mounting a swap partition on ephemeral storage
+instead if you still require it.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>You have now deployed an AWS EC2 instance
+and you are able to connect to it. The next part of this tutorial will show how
+to provision this instance to set up a LAMP stack on it. That simply means
+installing packages using the package manager; a piece of cake. Then there will
+be three more parts: On the first one I will show how to obtain a signed
+certificate, because I am tired of visiting sites with self-signed certs when
+it's only 9 US dollars and a few minutes of your time to set up a signed one
+that will last you at least a year. After that I will publish another short part
+on how to configure the Maria DB SQL service, the PHP FPM service and the
+Apache Web Server on our CentOS 7 instance. Finally, the last part of this
+series will teach you how set up and deploy a PHP web application using git and
+composer, plus how to set up the records of a DNS zone file so your domain
+points to your EC2 instance and you can give your users a nice way to access
+your web app.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>2/5: ADDING DISTRO REPOS AND PROVISIONING A
+CENTOS 7 LAMP INSTANCE </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>This is the second part of a five part
+series on how to set up a web application with proper SSL support and a LAMP
+stack on a CentOS 7 Amazon Elastic Compute Cloud virtual machine.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>On this part I will show you how to
+provision the EC2 instance we launched on the previous part.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>This will be a short and easy one. The goal
+is to install all the updated packages we need to deploy the services required
+by our PHP web application.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>These requirements may vary depending on
+what kind of web application you want to deploy. At the very least you usually
+need a web server and PHP interpreter; Often enough you will need an SQL
+database too, and the capability to send mails from your PHP web app, using
+sendmail or postfix, for example. We will take care of installing the pertinent
+packages and all the dependencies involved.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>In order to get the latest stable versions
+of the packages we are about to install, we will start by adding a few
+repositories to those included on the standard CentOS release: epel, remi and
+MariaDB. </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>For epel repositories, that boils down to
+performing a simple yum install epel-release, as you can see in the screen
+capture.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 29"
+src="deployment_guide_files/image023.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>In the case of remi repos, we need to wget
+the rpm package and then yum-install it. After that, don't forget to edit the
+etc/yum.repos.d/remi.repo to activate the PHP and remi-release repositories.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 30"
+src="deployment_guide_files/image024.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 31"
+src="deployment_guide_files/image025.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>For mariadb there is a web page detailing
+the process (</span><a
+href="https://downloads.mariadb.org/mariadb/repositories/#mirror=tedeco&amp;distro=CentOS&amp;distro_release=centos7-amd64--centos7&amp;version=10.0"><span
+lang=EN-GB>https://downloads.mariadb.org/mariadb/repositories/#mirror=tedeco&amp;distro=CentOS&amp;distro_release=centos7-amd64--centos7&amp;version=10.0</span></a><span
+lang=EN-GB>), which is as simple as copying the repo definition to a .repo file
+in etc/yum.repos.d directory</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=649 id="Picture 32"
+src="deployment_guide_files/image026.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=348 id="Picture 34"
+src="deployment_guide_files/image027.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>After we set up the repos, the first thing
+we want to do is a system update. But before that, a little piece of advice:
+When you are working remotely it is a good idea to use a virtual terminal
+session manager like tmux or gnu screen to avoid broken connections terminating
+lengthy processes, specially if you manage your servers from a WiFi connected
+terminal like I often do. A simple yum install tmux will provide you with the
+tmux command that you can execute without parameters to start a new session.
+Once you do that, just run yum update and wait for the update to finish. A
+kernel update will be performed, which requires a system restart for the new
+kernel to be loaded. Instead of doing that right away we will first edit the
+selinux configuration by on /etc/sysconfig/selinux file and set the SELINUX
+property to permissive, which also requires a system restart to take effect.
+Don't freak out by this global security policy change. Unless your server is a
+juicy target for hackers or you are a very careless sysadmin or you share admin
+rights on this server with a few other people which shouldn't be trusted with
+having god powers on a production server you should be OK. Although I admit that's
+a lot of ifs...</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 36"
+src="deployment_guide_files/image028.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=382 id="Picture 35"
+src="deployment_guide_files/image029.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=382 id="Picture 37"
+src="deployment_guide_files/image030.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>All that's left to do now is performing a
+yum-install on the required packages, as you can see in the following screen
+captures. You can remove any package you don't think you are going to need,
+although I suggest you leave them all, just in case.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 38"
+src="deployment_guide_files/image031.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=335 id="Picture 39"
+src="deployment_guide_files/image032.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=363 id="Picture 40"
+src="deployment_guide_files/image033.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>On the last part of this tutorial I will be
+deploying a PHP web application with GPG encryption support, which doesn't come
+packaged on CentOS, bringing up the opportunity to show how simple is to
+install PECL and the development tools required to build a PHP PECL extension
+from the PECL repository. This is something you should actually skip if you
+don't need it, because if will install a lot of dependencies that will take a
+relatively significant amount of space for an 8 GB drive</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 41"
+src="deployment_guide_files/image034.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 42"
+src="deployment_guide_files/image035.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 43"
+src="deployment_guide_files/image036.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 44"
+src="deployment_guide_files/image037.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=453 id="Picture 45"
+src="deployment_guide_files/image038.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 46"
+src="deployment_guide_files/image039.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=377 id="Picture 47"
+src="deployment_guide_files/image040.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=348 id="Picture 48"
+src="deployment_guide_files/image041.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 49"
+src="deployment_guide_files/image042.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 50"
+src="deployment_guide_files/image043.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>And that's all. We have reached the end of
+this part and your instance is now provisioned with the services required to
+run a PHP web application. Before I show you on another part how to configure
+these services, I suggest you see the next part on this tutorial where you can
+see how to obtain a cheap 9 US dollar signed certificate to securely deploy
+your web application, protecting your users against somebody stealing your
+server's identity. If you are not concerned about your users being scammed that
+way, you may skip that part and go straight ahead to the services configuration
+part, which should be listed on the tutorial playlist and the description
+below.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>3/5: OBTAINING A VALID CA SIGNED SSL
+CERTIFICATE</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>The third part of this five part series on
+how to deploy an SSL enhanced web application and bring up a CentOS LAMP stack
+on the Amazon cloud from the ground.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>On this part I will shou you how to get
+your certificate signed so your users can trust that your webapp is your webapp
+and not some impersonator trying to do nasty things.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>I want to demonstrate how easy and simple
+this procedure is by clearly explaining all there is to know in less than two
+minutes so let's cut to the chase:</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>Go to namecheap.com or whatever registrar
+you like best and put in your cart the cheapest SSL certificate you find. Yes,
+the cheapest will do; you don't need anything else. Here is my confirmation
+order I received the moment I entered my billing details. As simple as buying
+anything on eBay or Amazon or any other place on the Internet.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=650 id="Picture 51"
+src="deployment_guide_files/image044.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Next thing you have to do is to give them
+your certificate signing request code which you will generate along with your
+certificate key using openssl, like you are seeing on this screen caption.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=433 id="Picture 52"
+src="deployment_guide_files/image045.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Depending on your provider the CSR form
+access and details may change, but you will be looking at something like this.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=380 id="Picture 53"
+src="deployment_guide_files/image046.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=477 id="Picture 55"
+src="deployment_guide_files/image047.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=477 id="Picture 56"
+src="deployment_guide_files/image048.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=465 id="Picture 57"
+src="deployment_guide_files/image049.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Once you fill and send the form you will
+receive a confirmation code on your email and a link to generate your
+certificate.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=550 id="Picture 58"
+src="deployment_guide_files/image050.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Follow that link to complete the process
+and the certificate will be sent to your email address.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=413 id="Picture 59"
+src="deployment_guide_files/image051.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=413 id="Picture 60"
+src="deployment_guide_files/image052.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=497 id="Picture 61"
+src="deployment_guide_files/image053.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Now upload the contents of the certificate
+bundle to your server's /etc/pki/tls/certs and put them together by
+concatenating them in the order shown in the caption (from highest to lowest
+hierarchy), as shown on the screen.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=362 id="Picture 62"
+src="deployment_guide_files/image054.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>And that's it! You have a signed
+certificate bundle ready to be used with Apache Web Server or any other web
+server with SSL support. An important reminder: The certificate bundle is
+public and your server will be passing it along to any connected client. The
+private key on the other hand is super secret stuff and you should be very
+careful who you give access to it, which ideally should be nobody. </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>On the next part I will be configuring
+apache's SSL module, using the certificate and key generated on this part,
+which will take like 2 seconds, plus all the other things that need to be
+configured before deploying our application, which will take a little longer,
+but not much longer. Meet me there if you want to know more.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>4/5: CONFIGURING A CENTOS 7 LAMP STACK </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>This is the fourth part out of a five part
+series on how to deploy a PHP Web Application on an Apache Web server on a
+CentOS 7 machine on Amazon Elastic Compute Cloud. If you didn't get lost and
+ended up here by chance, by the end of this part you will know how to set up
+your web server, PHP and MySQL services on your production machine to bring joy
+to thousands of users with an infrastructure that costs you less than a
+sandwich per month.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>I will start by showing how to edit
+/etc/my.cnf file to bind the mariadb daemon to localhost address so you can
+connect to it from the local machine using a TCP client. After that I suggest
+you run mysql_secure_installation script like shown on the screen to perform
+some security checks and configuration tasks.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=382 id="Picture 63"
+src="deployment_guide_files/image055.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><img border=0 width=564 height=934 id="Picture 64"
+src="deployment_guide_files/image056.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Now we will set up the SSL redirection on
+the httpd.conf file as shown by the highlighted text on this screenshot, so our
+clients are pointed to a secure connection when they try to reach us through a
+plain HTTP connection on port 80.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=618 id="Picture 65"
+src="deployment_guide_files/image057.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Continuing with the web server set up, this
+is how your SSL virtual host configuration should look like if you don't have
+fpm enabled. </span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=616 id="Picture 66"
+src="deployment_guide_files/image058.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>If you do (which you should if you were
+following this tutorial). It will look like this.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=769 id="Picture 70"
+src="deployment_guide_files/image059.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>The same goes for the CGI module on
+php.conf Apache configuration file. This is without fpm.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=594 id="Picture 67"
+src="deployment_guide_files/image060.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>And this is with fpm.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=606 id="Picture 69"
+src="deployment_guide_files/image061.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>We move on now to the PHP configuration
+itself. It is only a couple of lines on a couple of files you must edit to get
+it to work:</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - First, configure the allowed extensions
+on the etc/php-fpm.d/www.conf file.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=611 id="Picture 71"
+src="deployment_guide_files/image062.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Now, edit the sendmail path on the
+/etc/php.ini PHP configuration file to make it work with postfix, which is the
+default MTA we installed in the second part of this series.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=370 id="Picture 72"
+src="deployment_guide_files/image063.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB>What you can see right now above this
+paragraph is an example showing how to enable a PHP module. Most of them come
+enabled by default, gnupg, which I built and installed from PECL repo on the
+second part of this series, does not, but as you can see it is very easy to
+activate it if you require it. Just don't forget to restart the php-fpm daemon
+after doing it.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=335 id="Picture 74"
+src="deployment_guide_files/image064.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>That's the end of it. Now you can safely
+deploy pretty much every PHP web application there is around on your system,
+including the most popular CMSs such as WordPress, Drupal or Joomla. I kindly
+invite you to follow me to the next and last part of this tutorial if you want
+to see a demo on how to deploy the latest release of my very own project using
+git and composer, plus a little bonus on how your DNS zone file should look
+like if you want to link an Internet domain to your machine.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>5/5: DEPLOYING A LAMP WEB APP AND SETTING
+THE DNS RECORDS</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>This is the last part of this five part
+tutorial on how to set up a LAMP stack on AWS EC2 and deploy an PHP web
+application with SSL support on it.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>Up until now, I have been giving you vendor
+specific instructions on how to set up a free and open source system that can
+run pretty much any PHP web application on the market.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>On this part I will show you how to set up
+a generic web application hosted on a git repository using composer
+dependencies; I will also show you a sample of a DNS zone file linking a domain
+to it so it can be easily accessed.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>I will be deploying SynAPP, my own master
+thesis project which is currently online at synapp.info. Chances are you are
+not very interested on deploying this particular project, but I will be giving
+only but a few specific details about it which you can ignore to focus on the
+general aspects of deploying a web app if you wish. </span>Those general
+aspects would be: </p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal><span lang=EN-GB> - Installing composer and building the app
+and its dependencies on a public web folder from its git repository; </span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Importing the SQL DDL script containing
+the application database schema definition; </span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - Configuring the database connection
+settings and application paths and routes; </span></p>
+
+<p class=MsoNormal><span lang=EN-GB> - And, when everything is ready, pointing
+the domain to the machine where the application is serving requests.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>What you are seeing on the next screen
+capture are the commands required to complete the first step of the process:
+git cloning the repo; installing composer and running it to retrieve the app's
+dependencies. I am doing this as the root user in the root directory so when I
+finish setting up the application and move it to the public web folder all the
+file permissions and ownerships are set properly. That might not always be the
+case, so watch out for it or you could be leaving an exploitable attack vector
+on your server, like many Drupal users already know, unfortunately.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=363 id="Picture 75"
+src="deployment_guide_files/image065.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>This is how the app's deployment script
+looks like when it's configured for production. The most important thing here
+is to set the proper 'SYNAPP_DEPLOYMENT_ENVIRONMENT' constant definition, which
+I have set to production, and inside the production environment definition the
+proper SYNAPP_CONFIG_DIRNAME constant definition, which points to the folder
+where the application expects to find the rest of the configuration files.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=651 id="Picture 76"
+src="deployment_guide_files/image066.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>The first of those configuration files to
+be edited and placed on that folder is the facebook oauth credentials
+configuration file, which gives the application the parameters required to use
+facebook login to authenticate its users. There are four parameters to set:
+login and logout redirections which point to the app's respective processing
+scripts' URLs; and the application ID and secret which you can get when you
+register a new facebook app on facebook's developer console.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=464 id="Picture 77"
+src="deployment_guide_files/image067.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Then comes the database connection settings
+configuration. You can leave the default values and just edit the password by
+setting the same root password you chose when you executed the
+mysql_secure_installation script as indicated on the previous part of this
+tutorial. To leave a plaintext database root password around is not the best
+idea even if you are not going to deploy different web applications on the same
+database, so I suggest you to create a new database user with limited
+privileges and giving it access to the app database.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=462 id="Picture 78"
+src="deployment_guide_files/image068.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>The last configuration file are gnupg
+parameters. This are legacy settings and you can just leave them as they are
+because they won't be used by the app unless you want to enable password
+eavesdropping protection over HTTP, which is pointless when you already using
+SSL. </span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=465 id="Picture 80"
+src="deployment_guide_files/image069.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Now comes the part where we import the
+database. It is a very straightforward process with only two steps. The first
+one is creating the database and the second running the script that populates
+it. In this case the bundled script already creates a database, so the first step
+is optional.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>The only thing you should be careful with
+is to set up the proper charset encoding for your client. I will be importing
+directly from the console so I also need to make sure my locale is properly
+configured. </span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>MariaDB client will connect using utf8 by
+default which is the encoding of the file I am about to import. The console
+charset is also set to UTF8 as the locale settings indicate. Once you make sure
+everything is alright, you can follow the process shown onscreen to load the
+application schema into the desired database. If you find an error like this,
+you need to upgrade your MySQL MariaDB version to one that supports
+CURRENT_TIMESTAMP as the default value on more than one column (that would be
+5.6 or later, I believe)</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=532 id="Picture 81"
+src="deployment_guide_files/image070.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=532 id="Picture 82"
+src="deployment_guide_files/image071.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Now, this is only specific to synapp: If
+you want to access the administrative interface you must create an
+administrator using the provided CLI script, as shown on the screen. After
+that, you can move the application's synapp folder to a public web folder. In
+the second part we defined this path as /var/www, so we will move the project's
+synapp directory there.</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=363 id="Picture 83"
+src="deployment_guide_files/image072.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 84"
+src="deployment_guide_files/image073.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>The only step left to do in the server
+would be to bring up the apache web server service. </span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 85"
+src="deployment_guide_files/image074.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>After that you should go to your
+registrar's web admin panel and edit the app domain's DNS zone file. What you
+see is an example defining 4 subdomains and a default domain plus two mx
+records for mail exchange services. </span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=870 id="Picture 86"
+src="deployment_guide_files/image075.jpg"></p>
+
+<p class=MsoNormal><span lang=EN-GB>We have reached the end of this tutorial.
+If everything went ok you should be able to access your webapp, as you can see
+on the screen. </span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=460 id="Picture 87"
+src="deployment_guide_files/image076.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=326 id="Picture 88"
+src="deployment_guide_files/image077.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>If you have any trouble, don't hesitate to
+contact me and I will answer happily to the best of my knowledge as soon as I
+have the time. Have fun, and happy hacking.</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+
+</div>
+
+</body>
+
+</html>
