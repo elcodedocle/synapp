@@ -32,7 +32,7 @@ if ((isset($_POST['user'])) && (isset($_POST['code']))) {
         $sql = "SELECT * FROM users WHERE user = :user";
         $stmt = $link->prepare($sql);
         $stmt->bindValue(':user', $user, PDO::PARAM_STR);
-        if ($stmt->execute()===false||$stmt->rowCount()<1||($row = $stmt->execute())===false) {
+        if (($row = $stmt->execute())===false||$stmt->rowCount()<1) {
             die ("Invalid request.");
         }
         $_SESSION['if_lang'] = $row['interface_language'];
