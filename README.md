@@ -521,4 +521,4 @@ its root folder.
 [50]: https://github.com/DataTables/Plugins/tree/1.10.7/integration/bootstrap/3
 [51]: https://bitbucket.org/synappv1/synapp/issues
 [52]: https://bitbucket.org/synappv1/synapp/fork
-[53]: http://htmlpreview.github.io/?https://bitbucket.org/synappv1/synapp/raw/master/resources/deployment_guide/deployment_guide.htm
+[53]: https://synapp.info/deployment_guide/index.html
