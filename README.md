@@ -2,7 +2,7 @@ Synapp V1
 =========
 ####*A crowdsourcing web platform for exploring and developing creative skills*
 
- Copyright (C) 2012 Gael Abadin<br/>
+ Copyright (C) 2012 Gael Abadin  
  License: [MIT Expat][1]
 ‎
 ## About the project
@@ -430,7 +430,7 @@ full stack platform has been canceled.
 from your branch
 
 **Q**: I am using Apache web server and I can't access the app on the specified
- location when setup finishes.<br/>
+ location when setup finishes.  
 **A**: You probably have a conflict with an existing .htaccess on your server. 
 Add these two lines at the top of all your previously existent .htaccess files 
 on the path to the app root, right after `RewriteEngine on` 
@@ -444,10 +444,10 @@ RewriteRule (.*) $1 [L]
 ## FAQ
 
 **Q**: Does it work on Mac OS X / any version of Microsoft Windows / any OS 
-other than Linux?<br/>
+other than Linux?  
 **A**: The project can be deployed on any OS supporting PHP and MySQL/MariaDB.
 
-**Q**: Which browsers / web client rendering engines are supported?<br/>
+**Q**: Which browsers / web client rendering engines are supported?  
 **A**: Any HTML5 / ECMA5 Javascript compatible browser is supported, which 
 means any (reasonably up to date) mainstream browser, such as Internet 
 Explorer >= 8, Chrome, Mozilla Firefox, Safari, Android Stock Browser, 
@@ -455,7 +455,7 @@ Konqueror, etc. will be supported. Latest Mozilla Firefox is the recommended
 browser, since it was the reference browser used for the development of the 
 client application.
 
-**Q**: Does it work on a web server other than Apache?<br/>
+**Q**: Does it work on a web server other than Apache?  
 **A**: Although Apache is officially supported and recommended, any HTTP/1.X 
 compatible web server with PHP support should be fine. A PHP builtin web server
 routing script is provided on the resources folder for development purposes. 
