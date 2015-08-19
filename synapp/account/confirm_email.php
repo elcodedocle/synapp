@@ -35,9 +35,13 @@ if ((isset($_POST['user'])) && (isset($_POST['code']))) {
         $sql = "SELECT * FROM users WHERE user = :user";
         $stmt = $link->prepare($sql);
         $stmt->bindValue(':user', $user, PDO::PARAM_STR);
-        if (($row = $stmt->execute())===false||$stmt->rowCount()<1) {
+        
+        if ($stmt->execute()===false || $stmt->rowCount()<1) {
             die ("Invalid request.");
         }
+        
+        $row = $stmt->fetch(PDO::PARAM_STR);
+        
         $_SESSION['if_lang'] = $row['interface_language'];
         if ($row['email_confirmation_code'] === hash('sha256', $code)) {
             $break = false;

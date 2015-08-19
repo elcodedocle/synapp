@@ -30,8 +30,10 @@ if (!isset($contextPath)){
         });
     }
     $(document).ready(function () {
+        var totalWidth = 0;
         mainmenu();
-        $('#menu').width(Math.max(700,310+$('#elasticli').width()))
+        $('#nav').find('> li').each(function(i){totalWidth+=parseInt($(this).width(),10);});
+        $('#menu').width(Math.max(500,totalWidth));
     });
 </script>
 <div id="menu">
