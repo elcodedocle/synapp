@@ -23,8 +23,8 @@ function send_confirmation_email($email, $link)
     $msg .= PR_MAIL_NR . PHP_EOL . PHP_EOL;
     $msg .= PR_MAIL_IGNORE . PHP_EOL . PHP_EOL;
     $msg .= PR_MAIL_DO . PHP_EOL . PHP_EOL;
-    $msg .= "http://synapp.info/account/confirm_email.php?user=" . $user . "&code=" . $code . " " . PR_MAIL_DO_HTTP . PHP_EOL . PHP_EOL;
-    $msg .= "https://synapp.info/account/confirm_email.php?user=" . $user . "&code=" . $code . " " . PR_MAIL_DO_HTTPS;
+    $msg .= SYNAPP_BASE_URL_HTTP . "/account/confirm_email.php?user=" . $user . "&code=" . $code . " " . PR_MAIL_DO_HTTP . PHP_EOL . PHP_EOL;
+    $msg .= SYNAPP_BASE_URL_HTTPS . "/account/confirm_email.php?user=" . $user . "&code=" . $code . " " . PR_MAIL_DO_HTTPS;
     $msg .= PHP_EOL . PHP_EOL;
     $msg .= "--" . $mime_boundary . "--" . PHP_EOL . PHP_EOL; // finish with two eol's for better security. see Injection. 
     # Common Headers

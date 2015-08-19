@@ -38,8 +38,8 @@ function passresout($arg1, $arg2 = "", $arg3 = "", $arg4 = 0, $arg5 = "")
             $msg .= PR_MAIL_NR . PHP_EOL . PHP_EOL;
             $msg .= PR_MAIL_IGNORE . PHP_EOL . PHP_EOL;
             $msg .= PR_MAIL_DO . PHP_EOL . PHP_EOL;
-            $msg .= "http://synapp.info/account/passres.phtml?user=" . $arg2 . "&code=" . $arg4 . " " . PR_MAIL_DO_HTTP . PHP_EOL . PHP_EOL;
-            $msg .= "https://synapp.info/account/passres.phtml?user=" . $arg2 . "&code=" . $arg4 . " " . PR_MAIL_DO_HTTPS;
+            $msg .= SYNAPP_BASE_URL_HTTP . "/account/passres.phtml?user=" . $arg2 . "&code=" . $arg4 . " " . PR_MAIL_DO_HTTP . PHP_EOL . PHP_EOL;
+            $msg .= SYNAPP_BASE_URL_HTTPS . "/account/passres.phtml?user=" . $arg2 . "&code=" . $arg4 . " " . PR_MAIL_DO_HTTPS;
             $msg .= PHP_EOL . PHP_EOL;
 
             # Finished

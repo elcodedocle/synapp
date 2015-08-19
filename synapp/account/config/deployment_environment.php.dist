@@ -6,6 +6,10 @@ define ('SYNAPP_DEPLOYMENT_ENVIRONMENT', "DEVELOPMENT"); // DEVELOPMENT / TEST /
 switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
     case 'PRODUCTION':
 
+        // without trailing slash
+        define ('SYNAPP_BASE_URL_HTTP', 'http://synapp.info');
+        define ('SYNAPP_BASE_URL_HTTPS', 'https://synapp.info');
+
         define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
 
         define ('SYNAPP_DELETE_DATA_ON_UNREGISTER', false);
@@ -45,6 +49,10 @@ switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
 
     case 'DEVELOPMENT':
 
+        // without trailing slash
+        define ('SYNAPP_BASE_URL_HTTP', 'http://testv1.synapp.info');
+        define ('SYNAPP_BASE_URL_HTTPS', 'https://testv1.synapp.info');
+
         define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
 
         define ('SYNAPP_DELETE_DATA_ON_UNREGISTER', true);
@@ -83,6 +91,10 @@ switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
         break;
 
     case 'TEST':
+
+        // without trailing slash
+        define ('SYNAPP_BASE_URL_HTTP', 'http://testv1.synapp.info');
+        define ('SYNAPP_BASE_URL_HTTPS', 'https://testv1.synapp.info');
 
         define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
 
