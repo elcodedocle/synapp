@@ -1,6 +1,9 @@
 <?php
 session_start();
 require_once dirname(__FILE__) . '/../account/config/deployment_environment.php';
+require_once dirname(
+        __FILE__
+    ) . '/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
 require_once dirname(__FILE__) . '/../connect.php';
 require_once dirname(__FILE__) . '/../languages/get_browser_language.php';
 require_once dirname(__FILE__) . '/..' . SYNAPP_CAPTCHA_PATH . '/captcha.php';
