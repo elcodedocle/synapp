@@ -4,7 +4,7 @@
  */
 function notify_no_mail()
 {
-    exec('sudo mail -ef /var/mail/root', $output, $return_var);
+    exec('sudo mail -ef /var/mail/'.SYNAPP_SUPPORT_USER, $output, $return_var);
     if ($return_var == '0') {
         /* There's already new mail. Do not send notification. */
         return 0;
@@ -13,10 +13,10 @@ function notify_no_mail()
 
     /* There is no new mail but this function has been called, so there is going to be -> Send notification */
 
-    $email = "gael.abadin@gmail.com";
-    $subject = "New message from " . $_SESSION['user_array']['user'] . " at SynAPP";
-    $mime_boundary = hash("sha256", time());
+    $email = SYNAPP_SUPPORT_EMAIL;
     $user = isset($_SESSION['user_array']) ? $_SESSION['user_array']['user'] : "anonymous";
+    $subject = "New message from " . $user . " at SynAPP";
+    $mime_boundary = hash("sha256", time());
     $msg = "You have a new message from user " . $user . " at SynAPP.";
     $msg .= PHP_EOL . PHP_EOL;
     $msg .= "--" . $mime_boundary . "--" . PHP_EOL . PHP_EOL; // finish with two eol's for better security. see Injection. 

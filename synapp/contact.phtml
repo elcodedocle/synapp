@@ -34,7 +34,7 @@ if (count($_POST)) {
             $errtxt = CON_MSG_OVS_ERR;
         } else {
             /* Mail the message */
-            $to = "root";
+            $to = SYNAPP_SUPPORT_USER;
             $subject = "Message from user " . $_SESSION['user_array']['user'];
             $message = "Subject: " . $_POST['subject'] . PHP_EOL . PHP_EOL . $_POST['message'];
             notify_no_mail();

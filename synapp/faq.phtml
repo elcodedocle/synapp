@@ -58,7 +58,7 @@ if (count($_POST)) {
             $elementid = "message";
         } else {
             /* Mail the message */
-            $to = "root";
+            $to = SYNAPP_SUPPORT_USER;
             $user = isset($_SESSION['user_array']) ? $_SESSION['user_array']['user'] : "anonymous";
             $subject = "Message from user " . $user;
             $message = "Subject: " . $_POST['subject'] . PHP_EOL . PHP_EOL . $_POST['message'];

@@ -9,6 +9,9 @@ switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
         // without trailing slash
         define ('SYNAPP_BASE_URL_HTTP', 'http://synapp.info');
         define ('SYNAPP_BASE_URL_HTTPS', 'https://synapp.info');
+        
+        define ('SYNAPP_SUPPORT_USER', 'root');
+        define ('SYNAPP_SUPPORT_EMAIL', 'gael.abadin@gmail.com');
 
         define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
 
@@ -52,6 +55,9 @@ switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
         // without trailing slash
         define ('SYNAPP_BASE_URL_HTTP', 'http://testv1.synapp.info');
         define ('SYNAPP_BASE_URL_HTTPS', 'https://testv1.synapp.info');
+        
+        define ('SYNAPP_SUPPORT_USER', 'root');
+        define ('SYNAPP_SUPPORT_EMAIL', 'gael.abadin@gmail.com');
 
         define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
 
@@ -95,6 +101,9 @@ switch (SYNAPP_DEPLOYMENT_ENVIRONMENT) {
         // without trailing slash
         define ('SYNAPP_BASE_URL_HTTP', 'http://testv1.synapp.info');
         define ('SYNAPP_BASE_URL_HTTPS', 'https://testv1.synapp.info');
+        
+        define ('SYNAPP_SUPPORT_USER', 'root');
+        define ('SYNAPP_SUPPORT_EMAIL', 'gael.abadin@gmail.com');
 
         define ('SYNAPP_ISSUE_TRACKER_URL', "https://bitbucket.org/synappv1/synapp/issues");
 

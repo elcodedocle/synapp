@@ -21,7 +21,7 @@ function password_restore_email($input)
     $usernotfound = true;
     if (isset($ua['email']) && $ua['email'] !== '') {
         $usernotfound = false;
-        if (($ua['email'] != '') && (parse_email($ua['email']) == 0) && (ord($ua['confirmed_email']) === 1)) {
+        if ($ua['email'] != '' && parse_email($ua['email']) == 0 && $ua['confirmed_email'] == 1) {
             $emailnotfound = false;
         }
     }

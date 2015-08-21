@@ -1,4 +1,4 @@
-﻿<html>
+<html>
 
 <head>
 <meta http-equiv=Content-Type content="text/html; charset=utf-8">
@@ -386,7 +386,7 @@ property to permissive, which also requires a system restart to take effect.
 Don't freak out by this global security policy change. Unless your server is a
 juicy target for hackers or you are a very careless sysadmin or you share admin
 rights on this server with a few other people which shouldn't be trusted with
-having god powers on a production server you should be OK. Although I admit that's
+having god powers on a production server you should be OK. Although I admit  that's
 a lot of ifs...</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=381 id="Picture 36"
@@ -400,8 +400,9 @@ src="deployment_guide_files/image030.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>All that's left to do now is performing a
 yum-install on the required packages, as you can see in the following screen
-captures. You can remove any package you don't think you are going to need,
-although I suggest you leave them all, just in case.</span></p>
+captures. You may install any package you are not sure you are going to need,
+but you should not install anything you know don’t need; particularly the mail
+services.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=453 id="Picture 38"
 src="deployment_guide_files/image031.png"></p>
@@ -446,10 +447,12 @@ src="deployment_guide_files/image040.png"></p>
 <p class=MsoNormal><img border=0 width=567 height=348 id="Picture 48"
 src="deployment_guide_files/image041.png"></p>
 
-<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 49"
-src="deployment_guide_files/image042.png"></p>
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=381 id="Picture 50"
+src="deployment_guide_files/image042.png"></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 12"
 src="deployment_guide_files/image043.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>And that's all. We have reached the end of
@@ -580,10 +583,11 @@ some security checks and configuration tasks.</span></p>
 <p class=MsoNormal><img border=0 width=567 height=382 id="Picture 63"
 src="deployment_guide_files/image055.png"></p>
 
-<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 49"
+src="deployment_guide_files/image056.png"></p>
 
 <p class=MsoNormal><img border=0 width=564 height=934 id="Picture 64"
-src="deployment_guide_files/image056.png"></p>
+src="deployment_guide_files/image057.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>Now we will set up the SSL redirection on
 the httpd.conf file as shown by the highlighted text on this screenshot, so our
@@ -591,31 +595,31 @@ clients are pointed to a secure connection when they try to reach us through a
 plain HTTP connection on port 80.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=618 id="Picture 65"
-src="deployment_guide_files/image057.png"></p>
+src="deployment_guide_files/image058.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>Continuing with the web server set up, this
 is how your SSL virtual host configuration should look like if you don't have
 fpm enabled. </span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=616 id="Picture 66"
-src="deployment_guide_files/image058.png"></p>
+src="deployment_guide_files/image059.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>If you do (which you should if you were
 following this tutorial). It will look like this.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=769 id="Picture 70"
-src="deployment_guide_files/image059.png"></p>
+src="deployment_guide_files/image060.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>The same goes for the CGI module on
 php.conf Apache configuration file. This is without fpm.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=594 id="Picture 67"
-src="deployment_guide_files/image060.png"></p>
+src="deployment_guide_files/image061.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>And this is with fpm.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=606 id="Picture 69"
-src="deployment_guide_files/image061.png"></p>
+src="deployment_guide_files/image062.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>We move on now to the PHP configuration
 itself. It is only a couple of lines on a couple of files you must edit to get
@@ -627,14 +631,14 @@ it to work:</span></p>
 on the etc/php-fpm.d/www.conf file.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=611 id="Picture 71"
-src="deployment_guide_files/image062.png"></p>
+src="deployment_guide_files/image063.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB> - Now, edit the sendmail path on the
 /etc/php.ini PHP configuration file to make it work with postfix, which is the
 default MTA we installed in the second part of this series.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=370 id="Picture 72"
-src="deployment_guide_files/image063.jpg"></p>
+src="deployment_guide_files/image064.jpg"></p>
 
 <p class=MsoNormal><span lang=EN-GB>What you can see right now above this
 paragraph is an example showing how to enable a PHP module. Most of them come
@@ -644,7 +648,15 @@ activate it if you require it. Just don't forget to restart the php-fpm daemon
 after doing it.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=335 id="Picture 74"
-src="deployment_guide_files/image064.png"></p>
+src="deployment_guide_files/image065.png"></p>
+
+<p class=MsoNormal><span lang=EN-GB>Finally, if the specific application we want
+to deploy needs to execute a particular command with privileges (in this case
+check if the user root has mail in the local mailbox), we use visudo command to
+allow its execution as shown on the following capture:</span></p>
+
+<p class=MsoNormal><img border=0 width=567 height=381 id="Picture 1"
+src="deployment_guide_files/image066.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>That's the end of it. Now you can safely
 deploy pretty much every PHP web application there is around on your system,
@@ -684,10 +696,10 @@ to it so it can be easily accessed.</span></p>
 thesis project which is currently online at synapp.info. Chances are you are
 not very interested on deploying this particular project, but I will be giving
 only but a few specific details about it which you can ignore to focus on the
-general aspects of deploying a web app if you wish. </span>Those general
-aspects would be: </p>
+general aspects of deploying a web app if you wish. Those general aspects would
+be: </span></p>
 
-<p class=MsoNormal>&nbsp;</p>
+<p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
 <p class=MsoNormal><span lang=EN-GB> - Installing composer and building the app
 and its dependencies on a public web folder from its git repository; </span></p>
@@ -713,7 +725,7 @@ case, so watch out for it or you could be leaving an exploitable attack vector
 on your server, like many Drupal users already know, unfortunately.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=363 id="Picture 75"
-src="deployment_guide_files/image065.png"></p>
+src="deployment_guide_files/image067.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
@@ -725,7 +737,7 @@ proper SYNAPP_CONFIG_DIRNAME constant definition, which points to the folder
 where the application expects to find the rest of the configuration files.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=651 id="Picture 76"
-src="deployment_guide_files/image066.png"></p>
+src="deployment_guide_files/image068.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>The first of those configuration files to
 be edited and placed on that folder is the facebook oauth credentials
@@ -736,7 +748,7 @@ scripts' URLs; and the application ID and secret which you can get when you
 register a new facebook app on facebook's developer console.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=464 id="Picture 77"
-src="deployment_guide_files/image067.png"></p>
+src="deployment_guide_files/image069.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>Then comes the database connection settings
 configuration. You can leave the default values and just edit the password by
@@ -748,22 +760,21 @@ database, so I suggest you to create a new database user with limited
 privileges and giving it access to the app database.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=462 id="Picture 78"
-src="deployment_guide_files/image068.png"></p>
+src="deployment_guide_files/image070.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>The last configuration file are gnupg
 parameters. This are legacy settings and you can just leave them as they are
-because they won't be used by the app unless you want to enable password
-eavesdropping protection over HTTP, which is pointless when you already using
-SSL. </span></p>
+because they won't be used by the app unless you want to enable password eavesdropping
+protection over HTTP, which is pointless when you already using SSL. </span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=465 id="Picture 80"
-src="deployment_guide_files/image069.png"></p>
+src="deployment_guide_files/image071.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>Now comes the part where we import the
 database. It is a very straightforward process with only two steps. The first
 one is creating the database and the second running the script that populates
-it. In this case the bundled script already creates a database, so the first step
-is optional.</span></p>
+it. In this case the bundled script already creates a database, so the first
+step is optional.</span></p>
 
 <p class=MsoNormal><span lang=EN-GB>&nbsp;</span></p>
 
@@ -784,10 +795,10 @@ CURRENT_TIMESTAMP as the default value on more than one column (that would be
 5.6 or later, I believe)</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=532 id="Picture 81"
-src="deployment_guide_files/image070.png"></p>
+src="deployment_guide_files/image072.png"></p>
 
 <p class=MsoNormal><img border=0 width=567 height=532 id="Picture 82"
-src="deployment_guide_files/image071.png"></p>
+src="deployment_guide_files/image073.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>Now, this is only specific to synapp: If
 you want to access the administrative interface you must create an
@@ -797,16 +808,16 @@ the second part we defined this path as /var/www, so we will move the project's
 synapp directory there.</span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=363 id="Picture 83"
-src="deployment_guide_files/image072.png"></p>
+src="deployment_guide_files/image074.png"></p>
 
 <p class=MsoNormal><img border=0 width=567 height=381 id="Picture 84"
-src="deployment_guide_files/image073.png"></p>
+src="deployment_guide_files/image075.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>The only step left to do in the server
 would be to bring up the apache web server service. </span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=381 id="Picture 85"
-src="deployment_guide_files/image074.png"></p>
+src="deployment_guide_files/image076.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>After that you should go to your
 registrar's web admin panel and edit the app domain's DNS zone file. What you
@@ -814,17 +825,17 @@ see is an example defining 4 subdomains and a default domain plus two mx
 records for mail exchange services. </span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=870 id="Picture 86"
-src="deployment_guide_files/image075.jpg"></p>
+src="deployment_guide_files/image077.jpg"></p>
 
 <p class=MsoNormal><span lang=EN-GB>We have reached the end of this tutorial.
 If everything went ok you should be able to access your webapp, as you can see
 on the screen. </span></p>
 
 <p class=MsoNormal><img border=0 width=567 height=460 id="Picture 87"
-src="deployment_guide_files/image076.png"></p>
+src="deployment_guide_files/image078.png"></p>
 
 <p class=MsoNormal><img border=0 width=567 height=326 id="Picture 88"
-src="deployment_guide_files/image077.png"></p>
+src="deployment_guide_files/image079.png"></p>
 
 <p class=MsoNormal><span lang=EN-GB>If you have any trouble, don't hesitate to
 contact me and I will answer happily to the best of my knowledge as soon as I
