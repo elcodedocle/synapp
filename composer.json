@@ -4,7 +4,7 @@
     "keywords": ["synapp", "creativity", "uvigo", "AGH", "computational creativity",
         "crowdsourcing", "theory of mind"],
     "type": "application",
-    "homepage": "https://bitbucket.org/elcodedocle/synappv1",
+    "homepage": "https://bitbucket.org/synappv1/synapp",
     "license": "MIT Expat",
     "authors": [{
         "name": "Gael Abadin",
