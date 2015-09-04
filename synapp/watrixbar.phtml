@@ -33,7 +33,7 @@ if (!isset($contextPath)){
         var totalWidth = 0;
         mainmenu();
         $('#nav').find('> li').each(function(i){totalWidth+=parseInt($(this).width(),10);});
-        $('#menu').width(Math.max(500,totalWidth));
+        $('#menu').width(Math.max(500,totalWidth+10));
     });
 </script>
 <div id="menu">

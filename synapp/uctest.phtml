@@ -13,25 +13,30 @@ require_once dirname(__FILE__) . '/connect.php';
 if (!isset($_SESSION['if_lang'])) {
     $_SESSION['if_lang'] = "eng";
 }
+$max_test_duration_in_seconds = 0;
 if ($_GET['ttype'] === 'utest') {
+    $max_test_duration_in_seconds = SYNAPP_MAX_UTEST_DURATION_IN_SECONDS;
     $langfile = 'usestxt.php';
     $starttimefieldname = 'timer_utestb_start';
     $endtimefieldname = 'timer_utestb_end';
     $ttype = 'utest';
     $ttypeid = 2;
 } elseif ($_GET['ttype'] === 'ctest') {
+    $max_test_duration_in_seconds = SYNAPP_MAX_CTEST_DURATION_IN_SECONDS;
     $langfile = 'commonstxt.php';
     $starttimefieldname = 'timer_ctestb_start';
     $endtimefieldname = 'timer_ctestb_end';
     $ttype = 'ctest';
     $ttypeid = 1;
 } elseif ($_GET['ttype'] === 'utesta') {
+    $max_test_duration_in_seconds = SYNAPP_MAX_UTEST_DURATION_IN_SECONDS;
     $langfile = 'usestxt.php';
     $starttimefieldname = 'timer_utesta_start';
     $endtimefieldname = 'timer_utesta_end';
     $ttype = 'utesta';
     $ttypeid = 2;
 } elseif ($_GET['ttype'] === 'ctesta') {
+    $max_test_duration_in_seconds = SYNAPP_MAX_CTEST_DURATION_IN_SECONDS;
     $langfile = 'commonstxt.php';
     $starttimefieldname = 'timer_ctesta_start';
     $endtimefieldname = 'timer_ctesta_end';
@@ -60,9 +65,12 @@ if (isset($_SESSION['test_resource']) && isset($_SESSION['test_resource'][$ttype
     $stmt->execute();
     if ($stmt->rowCount()>0){
         $row=$stmt->fetch(PDO::FETCH_ASSOC);
-        $sql = "SELECT * FROM `vgroup_resources` WHERE `ttypeid` = :ttypeid AND `resourceid`={$row['tresourceid']} AND `groupname` = :group AND `stage` = :stage AND `tresourcelang` = :lang";
+        $sql = "SELECT * FROM `vgroup_resources` WHERE `ttypeid` = :ttypeid AND `resourceid`={$row['tresourceid']} AND `stage` = :stage AND `tresourcelang` = :lang";
+        $stmt = $link->prepare($sql);
     } else {
         $sql = "SELECT * FROM `vgroup_resources` WHERE `ttypeid` = :ttypeid AND `groupname` = :group AND `stage` = :stage AND `tresourcelang` = :lang AND tresourcedesc IS NOT NULL AND TRIM(tresourcedesc) <> '' ORDER BY RAND() LIMIT 1 ";
+        $stmt = $link->prepare($sql);
+        $stmt->bindValue(':group', $_SESSION['user_array']['working_group'], PDO::PARAM_STR);
     }
     $uctest_element = '';
     $stage = '';
@@ -72,9 +80,7 @@ if (isset($_SESSION['test_resource']) && isset($_SESSION['test_resource'][$ttype
         case 'ctest': $stage = 1; break;
         case 'ctesta': $stage = 2; break;
     }
-    $stmt = $link->prepare($sql);
     $stmt->bindValue(':ttypeid', $ttypeid, PDO::PARAM_INT);
-    $stmt->bindValue(':group', $_SESSION['user_array']['working_group'], PDO::PARAM_STR);
     $stmt->bindValue(':stage', $stage, PDO::PARAM_INT);
     $stmt->bindValue(':lang', $_SESSION['user_array']['interface_language'], PDO::PARAM_STR);
     $stmt->execute();
@@ -98,7 +104,7 @@ if (($row['endtime'] === 0)) {
             $locked = false;
             $disabled = '';
             $_SESSION['user_array'][$starttimefieldname] = time();
-            $_SESSION['user_array'][$endtimefieldname] = $_SESSION['user_array'][$starttimefieldname] + 15 * 60;
+            $_SESSION['user_array'][$endtimefieldname] = $_SESSION['user_array'][$starttimefieldname] + $max_test_duration_in_seconds;
             $sql = "UPDATE users SET {$starttimefieldname} = :starttime, {$endtimefieldname} = :endtime WHERE user = :user";
             $stmt = $link->prepare($sql);
             $stmt->bindValue(':starttime',$_SESSION['user_array'][$starttimefieldname],PDO::PARAM_INT);
@@ -107,7 +113,7 @@ if (($row['endtime'] === 0)) {
             if ($stmt->execute()===false) {
                 die (var_export($link->errorInfo(), true));
             }
-            $sql = "INSERT INTO test_timings (ttypeid, tresourceid, tresourcelang, user, time_given, start_time, end_time) VALUES (:ttypeid, :tresourceid,  :lang,  :user, 900, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL 900 SECOND)";
+            $sql = "INSERT INTO test_timings (ttypeid, tresourceid, tresourcelang, user, time_given, start_time, end_time) VALUES (:ttypeid, :tresourceid,  :lang,  :user, {$max_test_duration_in_seconds}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL {$max_test_duration_in_seconds} SECOND)";
             $stmt = $link->prepare($sql);
             $stmt->bindValue(':ttypeid',$ttypeid,PDO::PARAM_INT);
             $stmt->bindValue(':tresourceid',$tresourceid,PDO::PARAM_INT);
@@ -160,7 +166,7 @@ $link = null;
             , focused = false
             , lastFocusedId = ''
             , lastCount = 0
-            , counter = (15 * 60 -<?php echo time()-$_SESSION['user_array'][$starttimefieldname]; ?>)
+            , counter = (<?php echo $max_test_duration_in_seconds; ?> - <?php echo time()-$_SESSION['user_array'][$starttimefieldname]; ?>)
             , locked =<?php echo $locked?"true":"false"; ?>
             , lastid =<?php echo $lastid; ?>
             , newIdsMap = {};

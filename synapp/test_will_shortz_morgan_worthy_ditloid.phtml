@@ -35,7 +35,7 @@ if (($row['dls'] === 0)) {
     if (isset($_GET['start']) && (($_SESSION['user_array']['gotestbefore'] == '1') || ($_SESSION['user_array']['gotestafter'] == '1'))) {
         if ($_GET['start'] == "true") {
             $locked = false;
-            $_SESSION['user_array']['ditloid_lock_timestamp'] = time() + 30 * 60;
+            $_SESSION['user_array']['ditloid_lock_timestamp'] = time() + SYNAPP_DTEST_MAX_TEST_DURATION_IN_SECONDS;
             $sql = "UPDATE users SET ditloid_lock_timestamp = :dlocktimestamp WHERE user = :user";
             $stmt = $link->prepare($sql);
             $stmt->bindValue(':dlocktimestamp',$_SESSION['user_array']['ditloid_lock_timestamp'],PDO::PARAM_INT);

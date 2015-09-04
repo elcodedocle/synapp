@@ -247,6 +247,7 @@ function change($edit, $link)
 
             if ($edit === "interface_language") {
                 $_SESSION['if_lang'] = $val;
+                unset($_SESSION['test_resource']);
             }
 
             if ($edit === "input_language") {
@@ -255,6 +256,8 @@ function change($edit, $link)
                 $_SESSION['user_array']['interface_language'] = $val;
                 $_SESSION['user_array']['hinterface_language'] = chr($hidden);
                 $_SESSION['if_lang'] = $val;
+                
+                unset($_SESSION['test_resource']);
 
             }
 

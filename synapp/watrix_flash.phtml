@@ -71,7 +71,7 @@ $_SESSION['hashed_ticket'] = hash("sha256", $ticket . $pair['id1'] . $pair['id2'
     </style>
     <![endif]-->
 </head>
-<body onload="setTimeout('switchPair()',5000);">
+<body onload="setTimeout('switchPair()',<?php echo SYNAPP_FLASH_TIMEOUT_IN_MILLISECONDS; ?>);">
 <div id="wrap">
     <div id="content">
         <?php $page = "watrix_flash";

@@ -1208,8 +1208,8 @@ SELECT
   , usrs.occupation
   , usrs.studies
   , usrs.active
-  , IF(usrs.ditloid_lock_timestamp = 0 OR usrs.ditloid_lock_timestamp IS NULL, NULL, DATE_SUB(FROM_UNIXTIME(usrs.ditloid_lock_timestamp), INTERVAL 30 * 60 - usrs.ditloid_time_left_when_locked SECOND)) timer_dtest_start
-  , IF(usrs.ditloid_lock_timestamp = 0 OR usrs.ditloid_lock_timestamp IS NULL, NULL, 30 * 60 - usrs.ditloid_time_left_when_locked) dtesttime
+  , IF(usrs.ditloid_lock_timestamp = 0 OR usrs.ditloid_lock_timestamp IS NULL, NULL, FROM_UNIXTIME(usrs.ditloid_lock_timestamp)) timer_dtest_end
+  , IF(usrs.ditloid_lock_timestamp = 0 OR usrs.ditloid_lock_timestamp IS NULL, NULL, usrs.ditloid_time_left_when_locked) dtesttimeleft
   , IF(usrs.timer_ctestb_start = 0 OR usrs.timer_ctestb_start IS NULL, NULL, FROM_UNIXTIME(usrs.timer_ctestb_start)) timer_ctestb_start
   , IF(usrs.timer_ctestb_start = 0 OR usrs.timer_ctestb_start IS NULL OR usrs.timer_ctestb_end = 0 OR usrs.timer_ctestb_end IS NULL, NULL, TIMESTAMPDIFF(SECOND,FROM_UNIXTIME(usrs.timer_ctestb_start),FROM_UNIXTIME(usrs.timer_ctestb_end))) ctestbtime
   , IF(usrs.timer_ctesta_start = 0 OR usrs.timer_ctesta_start IS NULL, NULL, FROM_UNIXTIME(usrs.timer_ctesta_start)) timer_ctesta_start

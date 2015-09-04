@@ -12,7 +12,9 @@ if (!isset($_SESSION['if_lang'])) {
 }
 
 if (isset($_POST['ttype'])) {
+    $max_test_duration_in_seconds = 0;
     if ($_POST['ttype'] === 'utest') {
+        $max_test_duration_in_seconds = SYNAPP_MAX_UTEST_DURATION_IN_SECONDS;
         $langfilelang = file_exists(
             dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/usestxt.php'
         ) ? $_SESSION['if_lang'] : 'eng';
@@ -22,6 +24,7 @@ if (isset($_POST['ttype'])) {
         $starttimefieldname = 'timer_utestb_start';
         $endtimefieldname = 'timer_utestb_end';
     } elseif ($_POST['ttype'] === 'ctest') {
+        $max_test_duration_in_seconds = SYNAPP_MAX_CTEST_DURATION_IN_SECONDS;
         $langfilelang = file_exists(
             '../languages/' . $_SESSION['if_lang'] . '/commonstxt.php'
         ) ? $_SESSION['if_lang'] : 'eng';
@@ -31,6 +34,7 @@ if (isset($_POST['ttype'])) {
         $starttimefieldname = 'timer_ctestb_start';
         $endtimefieldname = 'timer_ctestb_end';
     } elseif ($_POST['ttype'] === 'utesta') {
+        $max_test_duration_in_seconds = SYNAPP_MAX_UTEST_DURATION_IN_SECONDS;
         $langfilelang = file_exists(
             dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/usestxt.php'
         ) ? $_SESSION['if_lang'] : 'eng';
@@ -40,6 +44,7 @@ if (isset($_POST['ttype'])) {
         $starttimefieldname = 'timer_utesta_start';
         $endtimefieldname = 'timer_utesta_end';
     } elseif ($_POST['ttype'] === 'ctesta') {
+        $max_test_duration_in_seconds = SYNAPP_MAX_CTEST_DURATION_IN_SECONDS;
         $langfilelang = file_exists(
             dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/commonstxt.php'
         ) ? $_SESSION['if_lang'] : 'eng';
@@ -90,7 +95,7 @@ if (isset($_POST['ttype'])) {
         $link = null;
         die();
     } else {
-        if (time() > ($row['dls'] + 15 * 60)) {
+        if (time() > ($row['dls'] + $max_test_duration_in_seconds)) {
             echo $rejected_req;
             $link = null;
             die();
