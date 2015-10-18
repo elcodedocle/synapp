@@ -64,6 +64,10 @@ resource collections, groups of users and activities).
 
 ## Change Log
 
+### UPDATE v1.0.5 (2015/10 - Fifth maintenance update)
+
+ * Secure random code generation
+
 ### UPDATE v1.0.4 (2015/08 - Fourth maintenance update)
 
  * Migration to bitbucket
@@ -201,7 +205,12 @@ Synapp's client application makes use of the following client libraries and modu
  * [Synapp's client-ui resources][36], a collection of images used by Synapp's 
  web client user interface.
 
- * [Synapp's uuid generator][45], a [universal unique identifier][46] generator PHP class.
+ * [Synapp's uuid generator][45], a [universal unique identifier][46] generator
+ PHP class.
+
+ * [Synapp's cryptosecureprng][54], which allows for secure random codes 
+ generation (such as account deletion validation code or password recovery 
+ validation code).
 
 The administrative interface's HTML5 client also uses:
  
@@ -522,3 +531,4 @@ its root folder.
 [51]: https://bitbucket.org/synappv1/synapp/issues
 [52]: https://bitbucket.org/synappv1/synapp/fork
 [53]: https://synapp.info/deployment_guide/index.html
+[54]: https://bitbucket.org/synappv1/cryptosecureprng

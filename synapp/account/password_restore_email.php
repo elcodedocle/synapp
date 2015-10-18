@@ -1,9 +1,25 @@
 <?php
+
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
+
 /**
  * @param string $input
  */
 function password_restore_email($input)
 {
+    
+    $use_password_verify =
+        defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+        && (
+            SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+            ||
+            is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+            && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+        ) ?
+            true : false;
+    
     $link = connect();
     if (parse_email($input, 0) == 0) {
         $sql = "SELECT * FROM users WHERE email = :input AND confirmed_email = 1";
@@ -27,11 +43,15 @@ function password_restore_email($input)
     }
     if (!$emailnotfound) {
         $user = $ua['user'];
-        $code = mt_rand(); //recovery
         $link = connect();
         $sql = "UPDATE users SET recovery = :recovery WHERE user = :user";
         $stmt = $link->prepare($sql);
-        $stmt->bindValue(':recovery', hash("sha256", $code), PDO::PARAM_STR);
+        $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+        $code = $prng->rand();
+        $stmt->bindValue(':recovery', $use_password_verify ? password_hash(
+                $code,
+                SYNAPP_PASSWORD_DEFAULT
+            ) : hash("sha256", $code), PDO::PARAM_STR);
         $stmt->bindValue(':user', $user);
         $stmt->execute();
         $email = $ua['email'];

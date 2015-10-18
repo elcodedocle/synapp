@@ -6,6 +6,7 @@ require_once dirname(
     ) . '/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
 require_once dirname(__FILE__) . '/process_avatar.php';
 require_once dirname(__FILE__) . '/send_confirmation_email.php';
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
 
 /**
  * @param string $user
@@ -54,8 +55,11 @@ function change_pass($user, $old, $pass, $link)
         die ("Error: User not found.");
 
     }
-
-    $recovery = hash("sha256", mt_rand());
+    $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+    $recovery = $use_password_verify ? password_hash(
+        $prng->rand(),
+        SYNAPP_PASSWORD_DEFAULT
+    ) : hash("sha256", $prng->rand());
     if ($use_password_verify) {
         $hashedPassword = password_hash($pass, SYNAPP_PASSWORD_DEFAULT);
     } else {

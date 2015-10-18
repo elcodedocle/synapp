@@ -38,6 +38,7 @@ if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' .
     /** @noinspection PhpIncludeInspection */
     require_once dirname(__FILE__) . '/languages/eng/' . $langfile;
 }
+require_once dirname(__FILE__) . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
 
 $link = connect();
 $user = $_SESSION['user'];
@@ -60,7 +61,20 @@ if (count($_POST)) {
             CASCADE, DELETING ALL USER DATA ON OTHER TABLES 
         
         */
-        $bRecovery = isset($_SESSION['code']) ? ((hash(
+
+        $use_password_verify =
+            defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+            && (
+                SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+                ||
+                is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+                && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+                    || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+                    || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+            ) ?
+                true : false;
+        
+        $bRecovery = isset($_SESSION['code']) ? (($use_password_verify && password_verify($code,$_SESSION['code']) || !$use_password_verify && hash(
                 "sha256",
                 $_SESSION['code']
             ) === $row['recovery']) ? true : false) : false;
@@ -93,8 +107,12 @@ if (count($_POST)) {
         } else {
             if ($row['email'] !== "") {
                 if (!isset($_SESSION['code'])) {
-                    $code = mt_rand(); //recovery
-                    $sql = "UPDATE users SET recovery='" . hash("sha256", $code) . "' WHERE user=:user";
+                    $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+                    $code = $prng->rand(); //recovery
+                    $sql = "UPDATE users SET recovery='" . ($use_password_verify ? password_hash(
+                        $code,
+                        SYNAPP_PASSWORD_DEFAULT
+                    ) : hash("sha256", $code)) . "' WHERE user=:user";
                     $stmt = $link->prepare($sql);
                     $stmt->bindValue(':user',$user,PDO::PARAM_STR);
                     $stmt->execute();

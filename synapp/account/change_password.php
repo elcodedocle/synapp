@@ -4,6 +4,8 @@ require_once dirname(
         __FILE__
     ) . '/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
 
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
+
 /**
  * @param string $code
  * @param string $user
@@ -11,22 +13,8 @@ require_once dirname(
  */
 function change_password($code, $user, $pass)
 {
-    $link = connect();
-    $sql = "SELECT recovery FROM users WHERE user = :user";
-    $stmt = $link->prepare($sql);
-    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
-    $stmt->execute();
-    if ($ua = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        if (!(hash("sha256", $code) === $ua['recovery'])) {
-            $link = null;
-            die ("Error: Invalid request code (2).");
-        }
-    } else {
-        $link = null;
-        die ("Error: User not found (2).");
-    }
-    $recovery = hash("sha256", mt_rand());
-    $use_password_hash =
+    
+    $use_password_verify =
         defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
         && (
             SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
@@ -37,7 +25,27 @@ function change_password($code, $user, $pass)
                 || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
         ) ?
             true : false;
-    if ($use_password_hash) {
+    
+    $link = connect();
+    $sql = "SELECT recovery FROM users WHERE user = :user";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':user',$user,PDO::PARAM_STR);
+    $stmt->execute();
+    if ($ua = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        if ($use_password_verify && !password_verify($code,$ua['recovery']) || !$use_password_verify && !(hash("sha256", $code) === $ua['recovery'])) {
+            $link = null;
+            die ("Error: Invalid request code (2).");
+        }
+    } else {
+        $link = null;
+        die ("Error: User not found (2).");
+    }
+    $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+    $recovery = $use_password_verify ? password_hash(
+        $prng->rand(),
+        SYNAPP_PASSWORD_DEFAULT
+    ) : hash("sha256", $prng->rand());
+    if ($use_password_verify) {
         $hashedPassword = password_hash($pass, SYNAPP_PASSWORD_DEFAULT);
     } else {
         $hashedPassword = hash("sha256", $pass . NORAINBOW_SALT);

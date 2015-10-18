@@ -1,17 +1,34 @@
 <?php
+require_once dirname(__FILE__) . '/../account/config/deployment_environment.php';
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
 /**
  * @param string $email
  * @param \PDO $link
  */
 function send_confirmation_email($email, $link)
 {
+    $use_password_verify =
+        defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+        && (
+            SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+            ||
+            is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+            && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+        ) ?
+            true : false;
     $user = $_SESSION['user_array']['user'];
-    $code = mt_rand(); //validation code
+    $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG(); 
+    $code = $prng->rand(); //validation code
     
     $sql = "UPDATE users SET email_confirmation_code = :confirmationcode, confirmed_email = b'0' WHERE user = :user";
     
     $stmt = $link->prepare($sql);
-    $stmt->bindValue(':confirmationcode', hash("sha256",$code), PDO::PARAM_STR);
+    $stmt->bindValue(':confirmationcode',$use_password_verify ? password_hash(
+            $code,
+            SYNAPP_PASSWORD_DEFAULT
+        ) : hash("sha256", $code), PDO::PARAM_STR);
     $stmt->bindValue(':user', $user, PDO::PARAM_STR);
     $stmt->execute();
     
@@ -30,9 +47,9 @@ function send_confirmation_email($email, $link)
     # Common Headers
     $time = time();
     $now = (int)(date('Y', $time) . date('m', $time) . date('j', $time));
-    $headers = 'From: SYNAPP mailer <noreply@SYNAPP.com>' . PHP_EOL;
-    $headers .= 'Reply-To: noreply <noreply@SYNAPP.com>' . PHP_EOL;
-    $headers .= 'Return-Path: noreply <noreply@SYNAPP.com>' . PHP_EOL; // these two to set reply address
+    $headers = 'From: SYNAPP mailer <'.SYNAPP_NO_REPLY.'@'.SYNAPP_MAIL_DOMAIN.'>' . PHP_EOL;
+    $headers .= 'Reply-To: noreply <'.SYNAPP_NO_REPLY.'@'.SYNAPP_MAIL_DOMAIN.'>' . PHP_EOL;
+    $headers .= 'Return-Path: noreply <'.SYNAPP_NO_REPLY.'@'.SYNAPP_MAIL_DOMAIN.'>' . PHP_EOL; // these two to set reply address
     $headers .= "Message-ID:<" . $now . " admin@" . $_SERVER['SERVER_NAME'] . ">" . PHP_EOL;
     $headers .= "X-Mailer: PHP v" . phpversion() . PHP_EOL; // These two to help avoid spam-filters
     # Boundry for marking the split & Multitype Headers

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Closes an administrative session
+ * 
+ * @param location string URL to redirect after logout 
+ */
+
 // Initialize the session.
 session_start();
 

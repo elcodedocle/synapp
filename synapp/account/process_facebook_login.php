@@ -29,6 +29,9 @@ require_once SYNAPP_FACEBOOK_PHP_SDK_RELATIVE_PATH . '/HttpClients/FacebookCurlH
 
 require_once dirname(__FILE__) . '/process_registration_form.php';
 
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
+
+
 /**
  * @param PDO $link
  * @return bool|string
@@ -39,6 +42,19 @@ function process_facebook_login($link)
     $fbLoginRedirectUrl = SYNAPP_FB_LOGIN_REDIRECT_URL . (isset($_GET['location']) ? '?location=' . $_GET['location'] : '');
     $fbAppId = SYNAPP_FB_APP_ID;
     $fbAppSecret = SYNAPP_FB_APP_SECRET;
+
+    $use_password_verify =
+        defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+        && (
+            SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+            ||
+            is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+            && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+        ) ?
+            true : false;
+
     try {
 
         if (isset($_SESSION['fb_token'])) {
@@ -128,7 +144,11 @@ function process_facebook_login($link)
                 }
                 $sql = "UPDATE users SET recovery = :recovery, missed_logins='0', last_login = :time, ip = :ip WHERE user = :user";
                 $stmt = $link->prepare($sql);
-                $stmt->bindValue(':recovery', hash("sha256", mt_rand()), PDO::PARAM_STR);
+                $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+                $stmt->bindValue(':recovery', $use_password_verify ? password_hash(
+                        $prng->rand(),
+                        SYNAPP_PASSWORD_DEFAULT
+                    ) : hash("sha256", $prng->rand()), PDO::PARAM_STR);
                 $stmt->bindValue(':time', $time, PDO::PARAM_INT);
                 $stmt->bindValue(':ip', $ip, PDO::PARAM_INT);
                 $stmt->bindValue(':user', $_SESSION['user_array']['user'], PDO::PARAM_STR);

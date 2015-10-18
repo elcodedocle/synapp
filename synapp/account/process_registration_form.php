@@ -5,6 +5,7 @@ require_once dirname(
     ) . '/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
 require_once dirname(__FILE__) . '/parsers.php';
 require_once dirname(__FILE__) . '/user_email_exist.php';
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
 
 /**
  * @param PDO $link
@@ -14,7 +15,18 @@ require_once dirname(__FILE__) . '/user_email_exist.php';
  */
 function process_registration_form($link, $rd, $nocaptcha = false)
 {
-
+    $use_password_verify =
+        defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+        && (
+            SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+            ||
+            is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+            && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+                || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+        ) ?
+            true : false;
+    
     $ea = array('err' => false, 'usr' => "", 'pass' => "", 'il' => "", 'capt' => "");
 
     $i = parse($rd['user'], USER_MINLENGTH, USER_MAXLENGTH);
@@ -218,14 +230,22 @@ function process_registration_form($link, $rd, $nocaptcha = false)
         
         $stmt->bindValue(':user',$rd['user'],PDO::PARAM_STR);
         $stmt->bindValue(':hashedpass',$hashedPassword,PDO::PARAM_STR);
-        $stmt->bindValue(':recovery',hash("sha256", mt_rand()),PDO::PARAM_STR);
+        $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+        $stmt->bindValue(':recovery',$use_password_verify ? password_hash(
+                $prng->rand(),
+                SYNAPP_PASSWORD_DEFAULT
+            ) : hash("sha256", $prng->rand()),PDO::PARAM_STR);
         $stmt->bindValue(':firstdate',time(),PDO::PARAM_INT);
         $stmt->bindValue(':lastlogin',time(),PDO::PARAM_INT);
         $stmt->bindValue(':ilang',$_SESSION['if_lang'],PDO::PARAM_STR);
         $stmt->bindValue(':group',$group,PDO::PARAM_STR);
         $stmt->bindValue(':iolang',$rd['ilang'],PDO::PARAM_STR);
         $stmt->bindValue(':fbid',isset($rd['fbid'])?$rd['fbid']:null,isset($rd['fbid'])?PDO::PARAM_STR:PDO::PARAM_NULL);
-        $stmt->bindValue(':emailconfirmationcode',hash("sha256", mt_rand()),PDO::PARAM_STR);
+        $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+        $stmt->bindValue(':emailconfirmationcode',$use_password_hash ? password_hash(
+                $prng->rand(),
+                SYNAPP_PASSWORD_DEFAULT
+            ) : hash("sha256", $prng->rand()),PDO::PARAM_STR);
         
         if ($stmt->execute() === false) {
             die('Error: ' . var_export($link->errorInfo(), true) . PHP_EOL . $sql);

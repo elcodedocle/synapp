@@ -24,6 +24,8 @@ if (file_exists(dirname(__FILE__) . '/../languages/' . $_SESSION['if_lang'] . '/
 require_once dirname(__FILE__) . '/../languages/get_interface_languages_list.php';
 require_once dirname(__FILE__) . '/change_password.php';
 
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
+
 if (!count($_POST) || !isset($_SESSION['interface_languages'])) {
 
     if (!isset($link)) {
@@ -45,6 +47,18 @@ $passwordusermatcherr = false;
 $captchaerr = false;
 $error = -1;
 
+$use_password_verify =
+    defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+    && (
+        SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+        ||
+        is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+        && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+            || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+            || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+    ) ?
+        true : false;
+    
 if ((!count($_POST)) && (count($_GET))) {
     $user = $_GET['user'];
     $code = $_GET['code'];
@@ -55,11 +69,15 @@ if ((!count($_POST)) && (count($_GET))) {
     $stmt->execute();
     $link = null;
     if ($ua = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        if (!(hash("sha256", $code) === $ua['recovery'])) {
+        if ($use_password_verify && !password_verify($code,$ua['recovery']) || !$use_password_verify && !(hash("sha256", $code) === $ua['recovery'])) {
             $link = connect();
             $sql = "UPDATE users SET recovery = :recovery WHERE user = :user";
             $stmt = $link->prepare($sql);
-            $stmt->bindValue(':recovery', hash("sha256", mt_rand()), PDO::PARAM_STR);
+            $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+            $stmt->bindValue(':recovery', $use_password_verify ? password_hash(
+                    $prng->rand(),
+                    SYNAPP_PASSWORD_DEFAULT
+                ) : hash("sha256", $prng->rand()), PDO::PARAM_STR);
             $stmt->bindValue(':user', $user, PDO::PARAM_STR);
             $stmt->execute();
             $link = null;

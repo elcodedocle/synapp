@@ -8,6 +8,8 @@ require_once dirname(__FILE__) . '/../connect.php';
 require_once dirname(__FILE__) . '/../languages/get_browser_language.php';
 require_once dirname(__FILE__) . '/..' . SYNAPP_CAPTCHA_PATH . '/captcha.php';
 
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
+
 $error = 0;
 if (!isset($_SESSION['if_lang'])) {
     $lang = getDefaultLanguage();
@@ -43,7 +45,18 @@ if ((isset($_POST['user'])) && (isset($_POST['code']))) {
         $row = $stmt->fetch(PDO::PARAM_STR);
         
         $_SESSION['if_lang'] = $row['interface_language'];
-        if ($row['email_confirmation_code'] === hash('sha256', $code)) {
+        $use_password_verify =
+            defined('SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION')
+            && (
+                SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION === true
+                ||
+                is_string(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)
+                && (trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'on'
+                    || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === 'true'
+                    || trim(strtolower(SYNAPP_USE_PASSWORD_HASH_AUTHENTICATION)) === '1')
+            ) ?
+                true : false;
+        if ($use_password_verify && password_verify($code,$row['email_confirmation_code']) || !$use_password_verify && $row['email_confirmation_code'] === hash('sha256', $code)) {
             $break = false;
             $insert = true;
             $sql = "SELECT * FROM confirmed_emails WHERE email = :email";
@@ -65,7 +78,11 @@ if ((isset($_POST['user'])) && (isset($_POST['code']))) {
                     $stmt->bindValue(':email', $row['email'], PDO::PARAM_STR);
                     $stmt->execute();
                 }
-                $newccode = hash('sha256', mt_rand());
+                $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
+                $newccode = $use_password_verify ? password_hash(
+                    $prng->rand(),
+                    SYNAPP_PASSWORD_DEFAULT
+                ) : hash("sha256", $prng->rand());
                 $sql = "UPDATE users SET email_confirmation_code = :newccode , confirmed_email = b'1' WHERE user = :user";
                 $stmt = $link->prepare($sql);
                 $stmt->bindValue(':newccode', $newccode, PDO::PARAM_STR);

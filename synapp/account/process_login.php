@@ -3,6 +3,7 @@ require_once dirname(__FILE__) . '/config/deployment_environment.php';
 require_once dirname(
         __FILE__
     ) . '/' . SYNAPP_CONFIG_DIRNAME . '/profile_constants_constraints_defaults_and_selector_values.php';
+require_once dirname(__FILE__) . '/../' . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
 
 /**
  * @param string $user
@@ -52,6 +53,7 @@ function process_login($user, $pass, $link, $confirm = false)
                 $hashOK = true;
             }
         }
+        $prng = new synapp\info\tools\passwordgenerator\cryptosecureprng\CryptoSecurePRNG();
         if ($hashOK) {
             $_SESSION['user_array'] = $user_array;
             $_SESSION['auth'] = true;
@@ -64,7 +66,10 @@ function process_login($user, $pass, $link, $confirm = false)
             if (!$confirm) {
                 $sql = "UPDATE users SET recovery = :recovery WHERE user = :user";
                 $stmt = $link->prepare($sql);
-                $stmt->bindValue(':recovery', hash("sha256", mt_rand()), PDO::PARAM_STR);
+                $stmt->bindValue(':recovery', $use_password_verify ? password_hash(
+                        $prng->rand(),
+                        SYNAPP_PASSWORD_DEFAULT
+                    ) : hash("sha256", $prng->rand()), PDO::PARAM_STR);
                 $stmt->bindValue(':user',$user, PDO::PARAM_STR);
 
                 if ($stmt->execute() === false) {
@@ -109,7 +114,10 @@ function process_login($user, $pass, $link, $confirm = false)
                 if (!$confirm) {
                     $sql = "UPDATE users SET recovery = :recovery WHERE user = :user";
                     $stmt = $link->prepare($sql);
-                    $stmt->bindValue(':recovery', hash("sha256", mt_rand()), PDO::PARAM_STR);
+                    $stmt->bindValue(':recovery', $use_password_verify ? password_hash(
+                            $prng->rand(),
+                            SYNAPP_PASSWORD_DEFAULT
+                        ) : hash("sha256", $prng->rand()), PDO::PARAM_STR);
                     $stmt->bindValue(':user',$user, PDO::PARAM_STR);
 
                     if ($stmt->execute() === false) {

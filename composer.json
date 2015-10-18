@@ -24,7 +24,8 @@
         { "type": "vcs", "url": "https://bitbucket.org/synappv1/lightbox2" },
         { "type": "vcs", "url": "https://bitbucket.org/synappv1/openpgpjs" },
         { "type": "vcs", "url": "https://bitbucket.org/synappv1/ui-resources" },
-        { "type": "vcs", "url": "https://bitbucket.org/synappv1/uuid" }
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/uuid" },
+        { "type": "vcs", "url": "https://bitbucket.org/synappv1/cryptosecureprng" }
     ],
     "require": {
         "twbs/bootstrap": "~3.3.5",
@@ -44,7 +45,15 @@
         "synappv1/lightbox2": "dev-master",
         "synappv1/openpgpjs": "dev-master",
         "synappv1/ui-resources": "dev-master",
-        "synappv1/uuid": "dev-master"
+        "synappv1/uuid": "dev-master",
+        "synappv1/cryptosecureprng": "master",
+        "php": ">=5.5",
+        "ext-curl": "*",
+        "ext-gd" : "*",
+        "ext-mcrypt": "*",
+        "ext-openssl" : "*",
+        "ext-pdo" : "*",
+        "ext-mbstring" : "*"
     },
     "extra": {
         "branch-alias": {
