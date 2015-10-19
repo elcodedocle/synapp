@@ -46,7 +46,6 @@ if (count($_POST)) {
     if ($_POST['whoami'] === "login_form" || $_POST['whoami'] === ANDROID_ID) {
         $salt = ($_POST['whoami'] === "4ndr0id") ? ANDROID_SALT : $_SESSION['salt'];
         $link = connect();
-        $dpass = decrypt_gpg($_POST['codedpass'], $salt);
         if (process_login($_POST['user'], decrypt_gpg($_POST['codedpass'], $salt), $link)) {
             $link = null;
             header('Location: ' . $_POST['location']);
