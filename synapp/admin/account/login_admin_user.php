@@ -61,7 +61,7 @@ function start_admin_session($row, $link){
 
     $sql = "INSERT INTO `synadmin_session` ( `sessionid`, `uuid` ) VALUES ( :sessionid, :uuid )";
     $stmt = $link->prepare($sql);
-    $v5sessionUuid = \synapp\info\tools\uuid\uuid::v5(\synapp\info\tools\uuid\uuid::v4(), 'synapp.info');
+    $v5sessionUuid = \synapp\info\tools\uuid\uuid::v5(\synapp\info\tools\uuid\uuid::v4(), SYNAPP_MAIL_DOMAIN);
     $stmt->bindValue(':sessionid', $v5sessionUuid, PDO::PARAM_STR);
     $stmt->bindValue(':uuid', $row['uuid'], PDO::PARAM_STR);
 

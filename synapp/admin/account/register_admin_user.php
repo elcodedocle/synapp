@@ -52,7 +52,7 @@ function register_admin_user($reg_data, $link)
     
     $sql = "INSERT INTO `synadmin` ( `uuid`, `user`, `password`, `email`, `lang` ) VALUES ( :uuid, :user , :password , :email , :lang )";
     $stmt = $link->prepare($sql);
-    $v5uuid = \synapp\info\tools\uuid\uuid::v5(\synapp\info\tools\uuid\uuid::v4(), 'synapp.info');
+    $v5uuid = \synapp\info\tools\uuid\uuid::v5(\synapp\info\tools\uuid\uuid::v4(), SYNAPP_MAIL_DOMAIN);
     $stmt->bindValue(':uuid', $v5uuid, PDO::PARAM_STR);
     $stmt->bindValue(':user', $reg_data['user'], PDO::PARAM_STR);
     $stmt->bindValue(':password', $password, PDO::PARAM_STR);

@@ -122,7 +122,7 @@ if (!isset($contextPath)){
                 }
                 ?>><a href="<?php echo $contextPath; ?>admin/admusers.phtml"><?php echo BAR_USERSANDDATA; ?></a></li>
                 <li id="elasticli"><a href="#" onclick="return false;"><?php echo BAR_MYACCOUNT; ?>
-                        (<?php echo "Gael"; ?>)</a>
+                        (<?php echo $_SESSION['adm_array']['user']; ?>)</a>
                     <ul class="submenu">
                         <li<?php if ($page === "admsettings") {
                             echo " class='disabled'";
