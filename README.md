@@ -4,7 +4,8 @@ Synapp V1
 
  Copyright (C) 2012 Gael Abadin  
  License: [MIT Expat][1]
-‎
+<br/>
+[![Code Climate](https://codeclimate.com/github/elcodedocle/synapp/badges/gpa.svg)](https://codeclimate.com/github/elcodedocle/synapp)
 ## About the project
 
 This project was completed on 2012 during an Erasmus internship on [Akademia 
