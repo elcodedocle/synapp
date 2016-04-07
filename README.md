@@ -6,6 +6,7 @@ Synapp V1
  License: [MIT Expat][1]
 <br/>
 [![Code Climate](https://codeclimate.com/github/elcodedocle/synapp/badges/gpa.svg)](https://codeclimate.com/github/elcodedocle/synapp)
+[![Gitter](https://badges.gitter.im/elcodedocle/synapp.svg)](https://gitter.im/elcodedocle/synapp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ## About the project
 
 This project was completed on 2012 during an Erasmus internship on [Akademia 
