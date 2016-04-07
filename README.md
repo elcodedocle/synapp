@@ -2,6 +2,8 @@ Synapp V1
 =========
 ####*A crowdsourcing web platform for exploring and developing creative skills*
 
+[![Join the chat at https://gitter.im/elcodedocle/synapp](https://badges.gitter.im/elcodedocle/synapp.svg)](https://gitter.im/elcodedocle/synapp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
  Copyright (C) 2012 Gael Abadin  
  License: [MIT Expat][1]
 <br/>
