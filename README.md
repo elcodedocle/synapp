@@ -1,12 +1,11 @@
 Synapp V1
 =========
-####*A crowdsourcing web platform for exploring and developing creative skills*
+#### *A crowdsourcing web platform for exploring and developing creative skills*
 
  Copyright (C) 2012 Gael Abadin  
  License: [MIT Expat][1]
 <br/>
 [![Code Climate](https://codeclimate.com/github/elcodedocle/synapp/badges/gpa.svg)](https://codeclimate.com/github/elcodedocle/synapp)
-[![Gitter](https://badges.gitter.im/elcodedocle/synapp.svg)](https://gitter.im/elcodedocle/synapp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ## About the project
 
 This project was completed on 2012 during an Erasmus internship on [Akademia 
@@ -65,6 +64,10 @@ resources presented (such as adding, deleting, and assigning resources to
 resource collections, groups of users and activities).
 
 ## Change Log
+
+### UPDATE v1.0.6 (2020/07 - garbage cleanup update)
+
+ * Remove EULA and privacy resources. (These were only added to production deployment to comply with facebook login support submission request. They are only part of the deployed service and they do not apply to this source code).
 
 ### UPDATE v1.0.5 (2015/10 - Fifth maintenance update)
 
