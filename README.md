@@ -65,6 +65,10 @@ resource collections, groups of users and activities).
 
 ## Change Log
 
+### UPDATE v1.0.7 (2020/12 - privacy enhancement update)
+
+ * Make profile, stats and profile details hidden by default upon new user registration.
+
 ### UPDATE v1.0.6 (2020/07 - garbage cleanup update)
 
  * Remove EULA and privacy resources. (These were only added to production deployment to comply with facebook login support submission request. They are only part of the deployed service and they do not apply to this source code).
