@@ -178,38 +178,38 @@ function process_registration_form($link, $rd, $nocaptcha = false)
             , :hashedpass 
             , :recovery
             , :firstdate
-            , b'0' -- hfirstdate
+            , b'1' -- hfirstdate
             , 0 -- missed_logins
             , :lastlogin -- last_login
-            , b'0' -- hlast_login
+            , b'1' -- hlast_login
             , 0 -- ip
             , 0 -- last_update
             , :ilang -- interface_language
-            , b'0' -- hinterface_language
+            , b'1' -- hinterface_language
             , :group -- working_group
-            , b'0' -- hworking_group
+            , b'1' -- hworking_group
             , :iolang -- input_language
-            , b'0' -- hinput_language
-            , b'0' -- hprofile
+            , b'1' -- hinput_language
+            , b'1' -- hprofile
             , '' -- gender
-            , b'0' -- hgender
+            , b'1' -- hgender
             , NULL -- birthday
-            , b'0' -- hbirthday
+            , b'1' -- hbirthday
             , '' -- studies
-            , b'0' -- hstudies
+            , b'1' -- hstudies
             , '' -- studies_type
-            , b'0' -- hstudies_type
+            , b'1' -- hstudies_type
             , NULL -- studies_level
-            , b'0' -- hstudies_level
+            , b'1' -- hstudies_level
             , '' -- occupation
-            , b'0' -- hoccupation
+            , b'1' -- hoccupation
             , '' -- email
-            , b'0' -- hemail
+            , b'1' -- hemail
             , :emailconfirmationcode
             , 1 -- confirmed_email
             , '' -- avatar
             , b'0' -- nocaptcha
-            , b'0' -- hstats
+            , b'1' -- hstats
             , 0 -- ditloid_lock_timestamp
             , 0 -- ditloid_time_left_when_locked
             , 1 -- gotestbefore 
