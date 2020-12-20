@@ -65,9 +65,11 @@ resource collections, groups of users and activities).
 
 ## Change Log
 
-### UPDATE v1.0.7 (2020/12 - privacy enhancement update)
+### UPDATE v1.0.7 (2020/12 - privacy enhancement & PHP 8 support update)
 
  * Make profile, stats and profile details hidden by default upon new user registration.
+ * PHP 8 compatibility updates.
+ * Query item description conditionally on test type to avoid query result access warning on test evaluator.
 
 ### UPDATE v1.0.6 (2020/07 - garbage cleanup update)
 
