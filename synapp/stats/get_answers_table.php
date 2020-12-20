@@ -129,7 +129,7 @@ foreach ($_SESSION['orderby'][$t][0] as $i => $el) {
     $joined[] = $el . ' ' . $_SESSION['orderby'][$t][1][$i];
 }
 
-$orderby = implode($joined, ",");
+$orderby = implode(",", $joined);
 
 if ($t == 'associations') {
     $sql = "SELECT 
