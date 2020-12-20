@@ -383,13 +383,15 @@ switch ($ttype){
     case 'ctest': $stage = 1; break;
     case 'ctesta': $stage = 2; break;
 }
-$sql = "SELECT * FROM `vgroup_resources` WHERE `resourceid` = :resourceid AND `tresourcelang` = :lang";
-$stmt = $link->prepare($sql);
-$stmt->bindValue(':resourceid', $tresourceid, PDO::PARAM_INT);
-$stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
-$stmt->execute();
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-$test_item = '...'.strtoupper($row['tresourcedesc']);
+if ($ttype !== 'ditloid'){
+    $sql = "SELECT * FROM `vgroup_resources` WHERE `resourceid` = :resourceid AND `tresourcelang` = :lang";
+    $stmt = $link->prepare($sql);
+    $stmt->bindValue(':resourceid', $tresourceid, PDO::PARAM_INT);
+    $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $test_item = '...'.strtoupper($row['tresourcedesc']);
+}
 
 if (
     !isset($user) || !is_string($user)
