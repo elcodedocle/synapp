@@ -57,13 +57,13 @@ function process_facebook_login($link)
 
     try {
 
+        FacebookSession::setDefaultApplication($fbAppId, $fbAppSecret);
+
         if (isset($_SESSION['fb_token'])) {
 
             $session = new FacebookSession($_SESSION['fb_token']);
 
         } else {
-
-            FacebookSession::setDefaultApplication($fbAppId, $fbAppSecret);
 
             $helper = new FacebookRedirectLoginHelper($fbLoginRedirectUrl);
 
