@@ -4,28 +4,28 @@ require_once dirname(__FILE__) . '/account/config/deployment_environment.php';
 require_once dirname(__FILE__) . '/connect.php';
 if (isset($_GET['code'])) {
     $_SESSION['code'] = $_GET['code'];
-    if ((!isset($_GET['user'])) && (!isset($_SESSION['user']))) {
+    if ((!isset($_GET['user'])) && (!isset($_SESSION['user_array']))) {
         header('Location: login.phtml');
     }
-    if (!isset($_SESSION['user'])) {
-        $_SESSION['user'] = $_GET['user'];
+    if (!isset($_SESSION['user_array'])) {
+        $_SESSION['user_array']['user'] = $_GET['user'];
         $link = connect();
         $sql = "SELECT interface_language FROM users WHERE user = :user";
         $stmt = $link->prepare($sql);
-        $stmt->bindValue(':user',$_SESSION['user'],PDO::PARAM_STR);
+        $stmt->bindValue(':user',$_SESSION['user_array']['user'],PDO::PARAM_STR);
         $stmt->execute();
         $lrow = $stmt->fetch(PDO::FETCH_ASSOC);
         $_SESSION['if_lang'] = $lrow['interface_language'];
         $link = null;
     }
 } else {
-    if (!isset($_SESSION['user'])) {
+    if (!isset($_SESSION['user_array'])) {
         header('Location: login.phtml');
     }
 }
 require_once dirname(__FILE__) . '/account/process_login.php';
 /** @noinspection PhpIncludeInspection */
-require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH;
+require_once dirname(__FILE__) . SYNAPP_CAPTCHA_PATH . '/captcha.php';
 require_once dirname(__FILE__) . '/account/unregout.php';
 if (!isset($_SESSION['if_lang'])) {
     $_SESSION['if_lang'] = "eng";
@@ -41,7 +41,7 @@ if (file_exists(dirname(__FILE__) . '/languages/' . $_SESSION['if_lang'] . '/' .
 require_once dirname(__FILE__) . SYNAPP_CSPRNG_PATH . '/CryptoSecurePRNG.php';
 
 $link = connect();
-$user = $_SESSION['user'];
+$user = $_SESSION['user_array']['user'];
 $sql = "SELECT email,recovery FROM users WHERE user = :user";
 $stmt = $link->prepare($sql);
 $stmt->bindValue(':user',$user,PDO::PARAM_STR);
@@ -86,7 +86,7 @@ if (count($_POST)) {
                 // regular login, but it can still be used on a 
                 // "reactivate account" form if we want
                 $voidedPass = hash('sha256',$_SESSION['user_array']['pass']);
-                $sql = "UPDATE users SET active = 0, pass = {$voidedPass} WHERE user = :user";
+                $sql = "UPDATE users SET active = 0, pass = '{$voidedPass}' WHERE user = :user";
                 
             } else {
                 
@@ -101,7 +101,7 @@ if (count($_POST)) {
                 die('Error: ' . var_export($link->errorInfo(), true));
             }
             
-            header('Location:' . "logout.php?close=true");
+            header('Location:' . "account/logout.php?close=true");
             exit;
             
         } else {
@@ -149,7 +149,7 @@ if (!isset($_SESSION['pass_count'])) {
     <script type="text/javascript">
         function cfrm() {
             if (confirm('<?php 
-    echo UNREG_CONFIRM  . " " . $_SESSION['user'] . "\\n";
+    echo UNREG_CONFIRM  . " " . $_SESSION['user_array']['user'] . "\\n";
     echo UNREG_WARNING;?>'))
                 document.getElementById("dform").submit();
         }
